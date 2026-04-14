@@ -447,11 +447,35 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      addDoc,
+      setDoc,
+      deleteDoc,
+      doc,
+      onSnapshot,
+      query,
+      orderBy,
+      serverTimestamp,
+      limit
+    } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+
     const BOT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1OSgO6hmcmJJ0mbGu7_WtcKdpdyq4Rlwcs-u4C3cJRCk/edit?usp=sharing';
     const DISCORD_URL = 'https://discord.com/app';
-    const LOGIN_STORAGE_KEY = 'aibot_portal_login_data_v2';
-    const CLIENT_STORAGE_KEY = 'aibot_portal_client_data_v1';
+    const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCLjrYLFLOJisNVAhsM8-OR5O_61w0UzHQ",
+  authDomain: "aibot-7c01f.firebaseapp.com",
+  projectId: "aibot-7c01f",
+  storageBucket: "aibot-7c01f.firebasestorage.app",
+  messagingSenderId: "281537445695",
+  appId: "1:281537445695:web:b86efd807025561026dd8a"
+};
+
+    const FIREBASE_READY = FIREBASE_CONFIG.projectId !== 'YOUR_PROJECT_ID' && FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
     const defaultClientData = [
       { name:'株式会社AI BOT', industry:'自社', productionStatus:'保守', onboardingStatus:'完了', owner:'社内', nextAction:'運用継続', note:'社内ポータル・各種資料更新' },
       { name:'LINEXT', industry:'メディア', productionStatus:'公開済み', onboardingStatus:'完了', owner:'運用支援', nextAction:'記事更新確認', note:'被リンク・SEO施策継続' },
@@ -534,37 +558,64 @@
     const typePillClass = { 'サイト':'pill-blue', 'メール':'pill-cyan', 'ツール':'pill-green', 'その他':'pill-soft' };
     const statusClass = { '新規':'pill-red', '確認中':'pill-yellow', '対応中':'pill-blue', '完了':'pill-green' };
     const tagClass = { '機能追加':'pill-blue', '改善':'pill-cyan', 'バグ':'pill-red', '質問':'pill-soft' };
+
+    let app = null;
+    let db = null;
     let loginData = [];
-
-    function loadLogins() {
-      try {
-        const saved = localStorage.getItem(LOGIN_STORAGE_KEY);
-        loginData = saved ? JSON.parse(saved) : defaultLoginData;
-      } catch (e) {
-        loginData = defaultLoginData;
-      }
-      loginData = loginData.map(normalizeLoginItem);
-      saveLogins();
-    }
-    function saveLogins() {
-      localStorage.setItem(LOGIN_STORAGE_KEY, JSON.stringify(loginData));
-      updateStats();
-    }
-
     let clientData = [];
-    function loadClients() {
-      try {
-        const saved = localStorage.getItem(CLIENT_STORAGE_KEY);
-        clientData = saved ? JSON.parse(saved) : defaultClientData;
-      } catch (e) {
-        clientData = defaultClientData;
-      }
-      clientData = clientData.map(normalizeClientItem);
-      saveClients();
+
+    function makeId() { return String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000)); }
+    function normalizeLoginItem(item) {
+      return {
+        id: String(item.id || item.docId || makeId()),
+        type: item.type || 'その他',
+        name: item.name || '',
+        siteUrl: item.siteUrl || '',
+        loginUrl: item.loginUrl || '',
+        loginId: item.loginId || '',
+        password: item.password || '',
+        createdAt: item.createdAt || null,
+        updatedAt: item.updatedAt || null
+      };
     }
-    function saveClients() {
-      localStorage.setItem(CLIENT_STORAGE_KEY, JSON.stringify(clientData));
-      updateStats();
+    function normalizeClientItem(item) {
+      return {
+        id: String(item.id || item.docId || makeId()),
+        name: item.name || '',
+        industry: item.industry || '',
+        productionStatus: item.productionStatus || '未着手',
+        onboardingStatus: item.onboardingStatus || '未開始',
+        owner: item.owner || '',
+        nextAction: item.nextAction || '',
+        note: item.note || '',
+        createdAt: item.createdAt || null,
+        updatedAt: item.updatedAt || null
+      };
+    }
+    function escapeHtml(value) { return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+    function jsString(value) { return JSON.stringify(String(value ?? '')); }
+    function createSafeLink(url) { if (!url) return '<span class="help-text">—</span>'; const escaped = escapeHtml(url); return `<a href="${escaped}" target="_blank" rel="noopener" class="external-link mono">${escaped} <span>↗</span></a>`; }
+    function openLink(url) { window.open(url, '_blank'); }
+    function openBotSheet() { window.open(BOT_SHEET_URL, '_blank'); }
+    function copyText(text, btn) { navigator.clipboard.writeText(text || '').catch(() => {}); if (!btn) return; const original = btn.textContent; btn.textContent = 'コピー済み'; setTimeout(() => btn.textContent = original, 1200); }
+    function setDate() {
+      const d = new Date();
+      const days = ['日','月','火','水','木','金','土'];
+      document.getElementById('topbar-date').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
+    }
+    function syncMenu(id) {
+      return [...document.querySelectorAll('.menu-btn')].find(el => el.dataset.page === id) || null;
+    }
+    function showPage(id, el = null) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('page-' + id).classList.add('active');
+      if (el) el.classList.add('active'); else { const matched = syncMenu(id); if (matched) matched.classList.add('active'); }
+      if (id === 'marke-logins') renderLoginTable();
+      if (id === 'marke-ops') renderClients();
+      if (id === 'marke-sales') renderSalesMaterials();
+      if (id === 'deve-requests') renderRequests();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     function renderTodayMeetings() {
       const wrap = document.getElementById('today-meetings');
@@ -591,10 +642,75 @@
       const meeting = (WEEKLY_MEETINGS[weekday] && WEEKLY_MEETINGS[weekday][0]) ? WEEKLY_MEETINGS[weekday][0] : { url:'https://example.com/daily-standup' };
       openLink(meeting.url);
     }
-
-    function makeId() { return Date.now() + Math.floor(Math.random() * 100000); }
-    function normalizeLoginItem(item) { return { id: item.id || makeId(), type: item.type || 'その他', name: item.name || '', siteUrl: item.siteUrl || '', loginUrl: item.loginUrl || '', loginId: item.loginId || '', password: item.password || '' }; }
-    function normalizeClientItem(item) { return { id: item.id || makeId(), name: item.name || '', industry: item.industry || '', productionStatus: item.productionStatus || '未着手', onboardingStatus: item.onboardingStatus || '未開始', owner: item.owner || '', nextAction: item.nextAction || '', note: item.note || '' }; }
+    function setFirebaseStatus(text, kind = 'soft') {
+      const el = document.getElementById('firebase-status');
+      if (!el) return;
+      el.textContent = text;
+      el.className = `ghost-chip firebase-chip firebase-${kind}`;
+    }
+    function updateStats() {
+      const loginCount = Array.isArray(loginData) ? loginData.length : 0;
+      const clientCount = Array.isArray(clientData) ? clientData.length : 0;
+      document.getElementById('stat-login-count').textContent = loginCount;
+      document.getElementById('stat-client-count').textContent = clientCount;
+      document.getElementById('stat-request-count').textContent = requests.length;
+      const newCount = requests.filter(r => r.status === '新規').length;
+      document.getElementById('stat-new-count').textContent = newCount;
+      document.getElementById('new-request-count').textContent = newCount;
+      const totalEl = document.getElementById('client-total-count');
+      const prodEl = document.getElementById('client-production-count');
+      const onboardEl = document.getElementById('client-onboarding-count');
+      if (totalEl) totalEl.textContent = clientCount;
+      if (prodEl) prodEl.textContent = clientData.filter(x => x.productionStatus === '制作中').length;
+      if (onboardEl) onboardEl.textContent = clientData.filter(x => x.onboardingStatus === '進行中').length;
+    }
+    async function seedCollectionIfEmpty(collectionName, defaultRows) {
+      const ref = collection(db, collectionName);
+      const snap = await getDocs(query(ref, limit(1)));
+      if (!snap.empty) return;
+      await Promise.all(defaultRows.map((row, index) => addDoc(ref, {
+        ...row,
+        sortOrder: index,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      })));
+    }
+    function wireRealtimeCollections() {
+      onSnapshot(query(collection(db, 'portal_logins'), orderBy('sortOrder', 'asc')), (snapshot) => {
+        loginData = snapshot.docs.map(docSnap => normalizeLoginItem({ id: docSnap.id, ...docSnap.data() }));
+        renderLoginTable();
+        updateStats();
+      }, (error) => {
+        console.error(error);
+        setFirebaseStatus('Firestore読み込みエラー', 'error');
+      });
+      onSnapshot(query(collection(db, 'portal_clients'), orderBy('sortOrder', 'asc')), (snapshot) => {
+        clientData = snapshot.docs.map(docSnap => normalizeClientItem({ id: docSnap.id, ...docSnap.data() }));
+        renderClients();
+        updateStats();
+      }, (error) => {
+        console.error(error);
+        setFirebaseStatus('Firestore読み込みエラー', 'error');
+      });
+    }
+    async function initFirebase() {
+      if (!FIREBASE_READY) {
+        setFirebaseStatus('Firebase未設定', 'warn');
+        return;
+      }
+      try {
+        app = initializeApp(FIREBASE_CONFIG);
+        db = getFirestore(app);
+        setFirebaseStatus('Firebase接続中…', 'soft');
+        await seedCollectionIfEmpty('portal_logins', defaultLoginData);
+        await seedCollectionIfEmpty('portal_clients', defaultClientData);
+        wireRealtimeCollections();
+        setFirebaseStatus('Firebase接続済み', 'ok');
+      } catch (error) {
+        console.error(error);
+        setFirebaseStatus('Firebase接続エラー', 'error');
+      }
+    }
     function getFilteredSalesMaterials() {
       const q = (document.getElementById('material-search')?.value || '').trim().toLowerCase();
       const category = document.getElementById('material-category-filter')?.value || '';
@@ -630,45 +746,6 @@
       const panel = document.getElementById('sales-materials-panel');
       if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-
-    function updateStats() {
-      document.getElementById('stat-login-count').textContent = loginData.length;
-      document.getElementById('stat-client-count').textContent = clientData.length;
-      document.getElementById('stat-request-count').textContent = requests.length;
-      const newCount = requests.filter(r => r.status === '新規').length;
-      document.getElementById('stat-new-count').textContent = newCount;
-      document.getElementById('new-request-count').textContent = newCount;
-      const totalEl = document.getElementById('client-total-count');
-      const prodEl = document.getElementById('client-production-count');
-      const onboardEl = document.getElementById('client-onboarding-count');
-      if (totalEl) totalEl.textContent = clientData.length;
-      if (prodEl) prodEl.textContent = clientData.filter(x => x.productionStatus === '制作中').length;
-      if (onboardEl) onboardEl.textContent = clientData.filter(x => x.onboardingStatus === '進行中').length;
-    }
-    function setDate() {
-      const d = new Date();
-      const days = ['日','月','火','水','木','金','土'];
-      document.getElementById('topbar-date').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
-    }
-    function syncMenu(id) {
-      return [...document.querySelectorAll('.menu-btn')].find(el => el.dataset.page === id) || null;
-    }
-    function showPage(id, el = null) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('page-' + id).classList.add('active');
-      if (el) el.classList.add('active'); else { const matched = syncMenu(id); if (matched) matched.classList.add('active'); }
-      if (id === 'marke-logins') renderLoginTable();
-      if (id === 'marke-ops') renderClients();
-      if (id === 'marke-sales') renderSalesMaterials();
-      if (id === 'deve-requests') renderRequests();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    function openLink(url) { window.open(url, '_blank'); }
-    function openBotSheet() { window.open(BOT_SHEET_URL, '_blank'); }
-    function escapeHtml(value) { return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
-    function jsString(value) { return JSON.stringify(String(value ?? '')); }
-    function createSafeLink(url) { if (!url) return '<span class="help-text">—</span>'; const escaped = escapeHtml(url); return `<a href="${escaped}" target="_blank" rel="noopener" class="external-link mono">${escaped} <span>↗</span></a>`; }
     function getFilteredLogins() {
       const q = (document.getElementById('login-search')?.value || '').trim().toLowerCase();
       const type = document.getElementById('login-type-filter')?.value || '';
@@ -695,7 +772,7 @@
           <td>${createSafeLink(item.loginUrl)}</td>
           <td><span class="mono">${escapeHtml(item.loginId || '—')}</span></td>
           <td><div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><span class="mono" id="pw-${index}">${passwordMasked}</span><button class="btn" style="padding:8px 10px;" onclick="togglePassword(${index})">表示</button></div></td>
-          <td><div class="row-actions"><button class="btn" style="padding:8px 10px;" onclick='copyText(${jsString(item.loginId)}, this)'>IDコピー</button><button class="btn" style="padding:8px 10px;" onclick='copyText(${jsString(item.password)}, this)'>PWコピー</button><button class="btn" style="padding:8px 10px;" onclick="editLogin(${item.id})">編集</button><button class="btn" style="padding:8px 10px;" onclick="deleteLogin(${item.id})">削除</button></div></td>`;
+          <td><div class="row-actions"><button class="btn" style="padding:8px 10px;" onclick='copyText(${jsString(item.loginId)}, this)'>IDコピー</button><button class="btn" style="padding:8px 10px;" onclick='copyText(${jsString(item.password)}, this)'>PWコピー</button><button class="btn" style="padding:8px 10px;" onclick="editLogin(${jsString(item.id)})">編集</button><button class="btn" style="padding:8px 10px;" onclick="deleteLogin(${jsString(item.id)})">削除</button></div></td>`;
         tbody.appendChild(tr);
       });
     }
@@ -706,7 +783,6 @@
       if (!el || !item) return;
       if (el.textContent === '••••••••') el.textContent = item.password || '未設定'; else el.textContent = item.password ? '••••••••' : '未設定';
     }
-
     function getFilteredClients() {
       const q = (document.getElementById('client-search')?.value || '').trim().toLowerCase();
       const production = document.getElementById('client-production-filter')?.value || '';
@@ -741,7 +817,7 @@
           <td>${escapeHtml(item.owner || '—')}</td>
           <td>${escapeHtml(item.nextAction || '—')}</td>
           <td>${escapeHtml(item.note || '—')}</td>
-          <td><div class="row-actions"><button class="btn" style="padding:8px 10px;" onclick="editClient(${item.id})">編集</button><button class="btn" style="padding:8px 10px;" onclick="deleteClient(${item.id})">削除</button></div></td>
+          <td><div class="row-actions"><button class="btn" style="padding:8px 10px;" onclick="editClient(${jsString(item.id)})">編集</button><button class="btn" style="padding:8px 10px;" onclick="deleteClient(${jsString(item.id)})">削除</button></div></td>
         `;
         tbody.appendChild(tr);
       });
@@ -757,7 +833,7 @@
     }
     function openClientAddModal() { resetClientForm(); document.getElementById('client-add-modal').classList.add('open'); }
     function editClient(id) {
-      const item = clientData.find(x => x.id === id);
+      const item = clientData.find(x => x.id === String(id));
       if (!item) return;
       document.getElementById('client-edit-id').value = String(id);
       document.getElementById('client-modal-title').textContent = '✏️ クライアントを編集';
@@ -771,37 +847,34 @@
       document.getElementById('client-form-note').value = item.note || '';
       document.getElementById('client-add-modal').classList.add('open');
     }
-    function deleteClient(id) {
-      const item = clientData.find(x => x.id === id);
+    async function deleteClient(id) {
+      const item = clientData.find(x => x.id === String(id));
       if (!item) return;
       if (!confirm(`「${item.name}」を削除しますか？`)) return;
-      clientData = clientData.filter(x => x.id !== id);
-      saveClients();
-      renderClients();
+      if (!db) return alert('Firebase設定が必要です');
+      await deleteDoc(doc(db, 'portal_clients', String(id)));
     }
     function closeClientAddModal() { document.getElementById('client-add-modal').classList.remove('open'); }
-    function submitClient() {
+    async function submitClient() {
       const editId = document.getElementById('client-edit-id').value;
       const name = document.getElementById('client-form-name').value.trim();
       if (!name) { alert('会社名は必須です'); return; }
-      const payload = normalizeClientItem({
-        id: editId ? Number(editId) : makeId(),
+      if (!db) { alert('Firebase設定が必要です'); return; }
+      const payload = {
         name,
         industry: document.getElementById('client-form-industry').value.trim(),
         productionStatus: document.getElementById('client-form-production').value,
         onboardingStatus: document.getElementById('client-form-onboarding').value,
         owner: document.getElementById('client-form-owner').value.trim(),
         nextAction: document.getElementById('client-form-next').value.trim(),
-        note: document.getElementById('client-form-note').value.trim()
-      });
-      if (editId) clientData = clientData.map(item => item.id === Number(editId) ? payload : item);
-      else clientData.unshift(payload);
-      saveClients();
-      renderClients();
+        note: document.getElementById('client-form-note').value.trim(),
+        updatedAt: serverTimestamp()
+      };
+      if (editId) await setDoc(doc(db, 'portal_clients', String(editId)), payload, { merge: true });
+      else await addDoc(collection(db, 'portal_clients'), { ...payload, sortOrder: clientData.length, createdAt: serverTimestamp() });
       resetClientForm();
       closeClientAddModal();
     }
-
     function resetLoginForm() {
       document.getElementById('login-edit-id').value = '';
       document.getElementById('login-modal-title').textContent = '＋ ログイン情報を追加';
@@ -811,7 +884,7 @@
     }
     function openLoginAddModal() { resetLoginForm(); document.getElementById('login-add-modal').classList.add('open'); }
     function editLogin(id) {
-      const item = loginData.find(x => x.id === id);
+      const item = loginData.find(x => x.id === String(id));
       if (!item) return;
       document.getElementById('login-edit-id').value = String(id);
       document.getElementById('login-modal-title').textContent = '✏️ ログイン情報を編集';
@@ -824,16 +897,15 @@
       document.getElementById('login-form-pass').value = item.password || '';
       document.getElementById('login-add-modal').classList.add('open');
     }
-    function deleteLogin(id) {
-      const item = loginData.find(x => x.id === id);
+    async function deleteLogin(id) {
+      const item = loginData.find(x => x.id === String(id));
       if (!item) return;
       if (!confirm(`「${item.name}」を削除しますか？`)) return;
-      loginData = loginData.filter(x => x.id !== id);
-      saveLogins();
-      renderLoginTable();
+      if (!db) return alert('Firebase設定が必要です');
+      await deleteDoc(doc(db, 'portal_logins', String(id)));
     }
     function closeLoginAddModal() { document.getElementById('login-add-modal').classList.remove('open'); }
-    function submitLogin() {
+    async function submitLogin() {
       const editId = document.getElementById('login-edit-id').value;
       const type = document.getElementById('login-form-type').value;
       const name = document.getElementById('login-form-name').value.trim();
@@ -842,10 +914,10 @@
       const loginId = document.getElementById('login-form-id').value.trim();
       const password = document.getElementById('login-form-pass').value.trim();
       if (!name) { alert('サービス名は必須です'); return; }
-      const payload = normalizeLoginItem({ id: editId ? Number(editId) : makeId(), type, name, siteUrl, loginUrl, loginId, password });
-      if (editId) loginData = loginData.map(item => item.id === Number(editId) ? payload : item);
-      else loginData.unshift(payload);
-      saveLogins(); renderLoginTable();
+      if (!db) { alert('Firebase設定が必要です'); return; }
+      const payload = { type, name, siteUrl, loginUrl, loginId, password, updatedAt: serverTimestamp() };
+      if (editId) await setDoc(doc(db, 'portal_logins', String(editId)), payload, { merge: true });
+      else await addDoc(collection(db, 'portal_logins'), { ...payload, sortOrder: loginData.length, createdAt: serverTimestamp() });
       resetLoginForm();
       closeLoginAddModal();
     }
@@ -888,8 +960,71 @@
     function toggleComments(el) { const panel = el.nextElementSibling; const open = panel.style.display === 'block'; panel.style.display = open ? 'none' : 'block'; el.textContent = `💬 コメント ${el.textContent.match(/\d+/)?.[0] || '0'}件 ${open ? '▾' : '▴'}`; }
     function changeStatus(id, value) { const target = requests.find(r => r.id === id); if (!target) return; target.status = value; renderRequests(); }
     function addComment(id) { const input = document.getElementById(`reply-${id}`); if (!input || !input.value.trim()) return; const target = requests.find(r => r.id === id); if (!target) return; target.comments.push({ from:'Deve', text: input.value.trim() }); renderRequests(); }
-    function copyText(text, btn) { navigator.clipboard.writeText(text || '').catch(() => {}); const original = btn.textContent; btn.textContent = 'コピー済み'; setTimeout(() => btn.textContent = original, 1200); }
-    loadLogins(); loadClients(); setDate(); renderTodayMeetings(); renderSalesMaterials(); renderLoginTable(); renderClients(); renderRequests();
+
+    Object.assign(window, {
+      showPage,
+      syncMenu,
+      openSalesMaterials,
+      openLink,
+      openBotSheet,
+      renderSalesMaterials,
+      renderLoginTable,
+      renderClients,
+      openClientAddModal,
+      editClient,
+      deleteClient,
+      closeClientAddModal,
+      submitClient,
+      openLoginAddModal,
+      editLogin,
+      deleteLogin,
+      closeLoginAddModal,
+      submitLogin,
+      togglePassword,
+      downloadLoginsJson,
+      openRequestModal,
+      closeRequestModal,
+      submitRequest,
+      renderRequests,
+      toggleComments,
+      changeStatus,
+      addComment,
+      copyText,
+      openTodayMeeting
+    });
+
+    function injectFirebaseNotice() {
+      const topbar = document.querySelector('.topnav-right');
+      if (!topbar) return;
+      const chip = document.createElement('div');
+      chip.id = 'firebase-status';
+      chip.className = 'ghost-chip firebase-chip firebase-soft';
+      chip.textContent = FIREBASE_READY ? 'Firebase接続準備中' : 'Firebase未設定';
+      topbar.prepend(chip);
+      const style = document.createElement('style');
+      style.textContent = `
+        .firebase-chip.firebase-ok{background:rgba(83,181,141,.12);color:#2f8f6a;border-color:rgba(83,181,141,.18)}
+        .firebase-chip.firebase-warn{background:rgba(232,169,91,.14);color:#b77319;border-color:rgba(232,169,91,.18)}
+        .firebase-chip.firebase-error{background:rgba(230,106,122,.14);color:#c14d5b;border-color:rgba(230,106,122,.18)}
+        .firebase-chip.firebase-soft{background:rgba(255,255,255,.82);color:var(--text-soft);border-color:var(--line)}
+      `;
+      document.head.appendChild(style);
+      const heroActions = document.querySelector('.hero-actions');
+      if (heroActions) {
+        const note = document.createElement('div');
+        note.className = 'info-note';
+        note.style.marginTop = '14px';
+        note.innerHTML = 'Firebase版です。<strong>script内の FIREBASE_CONFIG を実際の値に差し替えると</strong>、クライアント管理とログイン情報がFirestoreで共有保存されます。';
+        heroActions.parentElement.appendChild(note);
+      }
+    }
+
+    setDate();
+    renderTodayMeetings();
+    renderSalesMaterials();
+    renderRequests();
+    injectFirebaseNotice();
+    initFirebase();
   </script>
 </body>
 </html>
