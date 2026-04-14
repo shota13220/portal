@@ -1,384 +1,894 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AIBOT 社内ポータル</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0f1117;--bg2:#1a1d27;--bg3:#22263a;--border:#2e3250;--accent:#4f6fff;--accent2:#7b61ff;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI','Hiragino Sans',sans-serif;font-size:14px;display:flex;height:100vh;overflow:hidden}
-.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
-.logo{padding:20px 16px;border-bottom:1px solid var(--border)}
-.logo h1{font-size:16px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.logo span{font-size:11px;color:var(--text3)}
-.nav{flex:1;overflow-y:auto;padding:8px}
-.nav-group{margin-bottom:16px}
-.nav-group-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:4px 8px;margin-bottom:4px}
-.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--text2);transition:.15s}
-.nav-item:hover{background:var(--bg3);color:var(--text)}
-.nav-item.active{background:linear-gradient(135deg,rgba(79,111,255,.2),rgba(123,97,255,.1));color:var(--accent);border:1px solid rgba(79,111,255,.2)}
-.nav-item .icon{font-size:16px;width:20px;text-align:center}
-.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
-.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.topbar h2{font-size:16px;font-weight:600}
-.topbar-right{display:flex;align-items:center;gap:12px}
-.badge{background:var(--accent);color:#fff;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
-.content{flex:1;padding:20px}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
-.card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.card-header h3{font-size:14px;font-weight:600}
-.card-body{padding:16px}
-.tbl{width:100%;border-collapse:collapse}
-.tbl th{background:var(--bg3);color:var(--text3);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
-.tbl td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
-.tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover td{background:rgba(255,255,255,.02)}
-.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap}
-.tag-green{background:rgba(34,197,94,.15);color:var(--green)}
-.tag-yellow{background:rgba(245,158,11,.15);color:var(--yellow)}
-.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
-.dot-green{background:var(--green)}
-.filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-.filter-bar input,.filter-bar select{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 12px;font-size:13px;outline:none;min-width:140px}
-.filter-bar input:focus,.filter-bar select:focus{border-color:var(--accent)}
-.filter-bar input::placeholder{color:var(--text3)}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:.15s}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:#3d5ae0}
-.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}
-.btn-ghost:hover{background:var(--bg3);color:var(--text)}
-.btn-sm{padding:4px 10px;font-size:12px}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
-.modal-overlay.show{display:flex}
-.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto}
-.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.modal-header h3{font-size:15px;font-weight:600}
-.modal-close{background:var(--bg3);border:none;color:var(--text2);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
-.modal-close:hover{color:var(--text)}
-.modal-body{padding:20px}
-.info-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
-.info-row:last-child{border-bottom:none}
-.info-label{color:var(--text3);font-size:12px;min-width:90px}
-.info-val{flex:1;font-size:13px;word-break:break-all}
-.pw-wrap{display:flex;align-items:center;gap:8px;flex:1}
-.pw-hide{font-family:monospace;letter-spacing:2px;color:var(--text2)}
-.copy-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap}
-.copy-btn:hover{background:rgba(79,111,255,.2);color:var(--accent);border-color:var(--accent)}
-.toggle-pw{background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:3px 6px}
-.toggle-pw:hover{color:var(--text)}
-.form-group{margin-bottom:14px}
-.form-label{font-size:12px;color:var(--text3);margin-bottom:6px;display:block}
-.form-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-size:13px;outline:none}
-.form-input:focus{border-color:var(--accent)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px}
-.stat-card .num{font-size:28px;font-weight:700;margin-bottom:4px}
-.stat-card .lbl{font-size:12px;color:var(--text3)}
-.page{display:none}
-.page.active{display:block}
-.pagination{display:flex;align-items:center;gap:8px;margin-top:12px;justify-content:flex-end}
-.pagination button{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px}
-.pagination button:hover:not(:disabled){background:var(--accent);color:#fff;border-color:var(--accent)}
-.pagination button:disabled{opacity:.4;cursor:not-allowed}
-.pagination .page-info{color:var(--text3);font-size:12px}
-.toast{position:fixed;bottom:20px;right:20px;background:#22c55e;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:9999;opacity:0;transform:translateY(10px);transition:.3s;pointer-events:none}
-.toast.show{opacity:1;transform:translateY(0)}
-a.ext-link{color:var(--accent);text-decoration:none;font-size:12px}
-a.ext-link:hover{text-decoration:underline}
-.no-data{padding:40px;text-align:center;color:var(--text3)}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIBOT 社内ポータル</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f3;
+      --bg-tertiary: #eeede9;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --text-tertiary: #9b9b9b;
+      --border-light: rgba(0,0,0,0.08);
+      --border-mid: rgba(0,0,0,0.15);
+      --border-strong: rgba(0,0,0,0.25);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ===== TOPBAR ===== */
+    .topbar {
+      background: #1a1a2e;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-logo {
+      width: 28px; height: 28px; background: #fff; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.5px;
+    }
+    .topbar-title { color: #fff; font-size: 15px; font-weight: 500; }
+    .topbar-date { color: rgba(255,255,255,0.45); font-size: 12px; }
+
+    /* ===== LAYOUT ===== */
+    .layout { display: flex; min-height: calc(100vh - 52px); }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 200px; flex-shrink: 0;
+      background: var(--bg-primary);
+      border-right: 0.5px solid var(--border-light);
+      padding: 20px 12px;
+      position: sticky;
+      top: 52px;
+      height: calc(100vh - 52px);
+      overflow-y: auto;
+    }
+    .sidebar-section { margin-bottom: 20px; }
+    .sidebar-label {
+      font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0 8px; margin-bottom: 4px;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 8px; border-radius: var(--radius-md);
+      cursor: pointer; font-size: 13px; color: var(--text-secondary);
+      transition: all 0.12s;
+    }
+    .sidebar-item:hover { background: var(--bg-secondary); color: var(--text-primary); }
+    .sidebar-item.active { background: #1a1a2e; color: #fff; }
+    .sidebar-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+    .sidebar-badge {
+      margin-left: auto; background: #E24B4A; color: #fff;
+      font-size: 10px; font-weight: 600; padding: 1px 6px;
+      border-radius: 10px; min-width: 18px; text-align: center;
+    }
+
+    /* ===== MAIN ===== */
+    .main { flex: 1; padding: 24px; overflow-x: hidden; }
+
+    /* ===== PAGE ===== */
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .page-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+
+    /* ===== TEAM SECTION ===== */
+    .team-block { margin-bottom: 20px; }
+    .team-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .team-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.03em; }
+    .badge-sales { background: #E6F1FB; color: #185FA5; }
+    .badge-ops { background: #E1F5EE; color: #0F6E56; }
+    .badge-deve { background: #EEEDFE; color: #534AB7; }
+    .badge-soumu { background: #FAEEDA; color: #854F0B; }
+    .team-desc { font-size: 12px; color: var(--text-tertiary); }
+
+    /* ===== GRID ===== */
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+
+    /* ===== CARD ===== */
+    .card {
+      background: var(--bg-primary); border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-lg); padding: 14px 16px;
+      cursor: pointer; transition: all 0.15s; position: relative;
+    }
+    .card:hover { border-color: var(--border-mid); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+    .card:active { transform: translateY(0); }
+    .card-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px; font-size: 15px;
+    }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+    .card-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+    .card-arrow { position: absolute; top: 12px; right: 12px; font-size: 11px; color: var(--text-tertiary); }
+
+    .c-blue .card-icon { background: #E6F1FB; color: #185FA5; }
+    .c-teal .card-icon { background: #E1F5EE; color: #0F6E56; }
+    .c-purple .card-icon { background: #EEEDFE; color: #534AB7; }
+    .c-amber .card-icon { background: #FAEEDA; color: #854F0B; }
+    .c-coral .card-icon { background: #FAECE7; color: #993C1D; }
+    .c-pink .card-icon { background: #FBEAF0; color: #993556; }
+
+    /* ===== DIVIDER ===== */
+    .divider { border: none; border-top: 0.5px solid var(--border-light); margin: 20px 0; }
+
+    /* ===== SECTION LABEL ===== */
+    .section-label {
+      font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    /* ===== PANEL ===== */
+    .panel {
+      background: var(--bg-primary); border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px;
+    }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-bottom: 0.5px solid var(--border-light);
+      background: var(--bg-secondary);
+    }
+    .panel-title { font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+    .panel-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      font-size: 12px; padding: 6px 14px; border-radius: 20px;
+      border: 0.5px solid var(--border-mid); cursor: pointer;
+      background: var(--bg-primary); color: var(--text-secondary);
+      transition: all 0.12s; font-family: inherit;
+    }
+    .btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+    .btn-primary {
+      background: #1a1a2e; color: #fff; border-color: #1a1a2e;
+    }
+    .btn-primary:hover { background: #2a2a4e; }
+    .btn-login {
+      background: #E6F1FB; color: #185FA5; border-color: #B5D4F4;
+      font-weight: 600;
+    }
+    .btn-login:hover { background: #B5D4F4; }
+    .btn-new {
+      background: #1a1a2e; color: #fff; border-color: #1a1a2e;
+    }
+    .btn-new:hover { opacity: 0.85; }
+
+    /* ===== SEARCH ROW ===== */
+    .search-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px; border-bottom: 0.5px solid var(--border-light);
+    }
+    .search-input {
+      flex: 1; font-size: 13px; padding: 6px 10px;
+      border-radius: 6px; border: 0.5px solid var(--border-mid);
+      background: var(--bg-primary); color: var(--text-primary); outline: none;
+      font-family: inherit;
+    }
+    .search-input:focus { border-color: #378ADD; }
+    .filter-select {
+      font-size: 12px; padding: 6px 8px; border-radius: 6px;
+      border: 0.5px solid var(--border-mid); background: var(--bg-primary);
+      color: var(--text-secondary); outline: none; font-family: inherit; cursor: pointer;
+    }
+
+    /* ===== TABLE ===== */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th {
+      padding: 8px 14px; text-align: left; font-size: 11px; font-weight: 600;
+      color: var(--text-tertiary); letter-spacing: 0.06em;
+      border-bottom: 0.5px solid var(--border-light);
+      background: var(--bg-secondary); white-space: nowrap;
+    }
+    .data-table td {
+      padding: 10px 14px; border-bottom: 0.5px solid var(--border-light);
+      color: var(--text-primary); vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--bg-secondary); }
+    .table-wrap { overflow-x: auto; }
+
+    /* ===== TAGS ===== */
+    .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+    .tag-beauty { background: #FBEAF0; color: #993556; }
+    .tag-food { background: #FAEEDA; color: #854F0B; }
+    .tag-real { background: #E6F1FB; color: #185FA5; }
+    .tag-clinic { background: #E1F5EE; color: #0F6E56; }
+    .tag-other { background: #F1EFE8; color: #5F5E5A; }
+    .plan-startup { background: #F1EFE8; color: #5F5E5A; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; display: inline-block; }
+    .plan-custom { background: #E6F1FB; color: #185FA5; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; display: inline-block; }
+    .plan-allin { background: #EEEDFE; color: #534AB7; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; display: inline-block; }
+    .tag-site { background: #E6F1FB; color: #185FA5; }
+    .tag-server { background: #FAEEDA; color: #854F0B; }
+    .tag-ads { background: #EEEDFE; color: #534AB7; }
+    .tag-sns { background: #FBEAF0; color: #993556; }
+    .tag-tool { background: #E1F5EE; color: #0F6E56; }
+
+    /* ===== STATUS DOT ===== */
+    .status-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-active { background: #1D9E75; }
+    .dot-pause { background: #BA7517; }
+    .dot-stop { background: #E24B4A; }
+
+    /* ===== REQUEST BOARD ===== */
+    .filter-tabs { display: flex; gap: 6px; padding: 10px 16px; border-bottom: 0.5px solid var(--border-light); flex-wrap: wrap; }
+    .ftab {
+      font-size: 12px; padding: 4px 10px; border-radius: 20px;
+      border: 0.5px solid var(--border-light); cursor: pointer;
+      color: var(--text-secondary); background: var(--bg-primary); font-family: inherit;
+    }
+    .ftab.active { background: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-mid); }
+    .request-list { padding: 10px 16px; display: flex; flex-direction: column; gap: 10px; max-height: 480px; overflow-y: auto; }
+    .request-card { border: 0.5px solid var(--border-light); border-radius: var(--radius-md); padding: 12px 14px; }
+    .request-card:hover { border-color: var(--border-mid); background: var(--bg-secondary); }
+    .req-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .req-title { font-size: 14px; font-weight: 600; color: var(--text-primary); flex: 1; }
+    .req-status { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+    .status-new { background: #FCEBEB; color: #A32D2D; }
+    .status-checking { background: #FAEEDA; color: #854F0B; }
+    .status-wip { background: #E6F1FB; color: #185FA5; }
+    .status-done { background: #E1F5EE; color: #0F6E56; }
+    .req-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+    .req-from { font-size: 11px; color: var(--text-tertiary); }
+    .req-tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+    .tag-feature { background: #EEEDFE; color: #534AB7; }
+    .tag-bug { background: #FCEBEB; color: #A32D2D; }
+    .tag-improve { background: #FAEEDA; color: #854F0B; }
+    .tag-question { background: #E1F5EE; color: #0F6E56; }
+    .req-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .req-client { font-size: 12px; color: var(--text-tertiary); margin-top: 6px; }
+    .req-comment-toggle { font-size: 12px; color: var(--text-secondary); margin-top: 8px; cursor: pointer; display: inline-block; user-select: none; }
+    .req-comment-toggle:hover { color: var(--text-primary); }
+    .req-comments { margin-top: 8px; border-top: 0.5px solid var(--border-light); padding-top: 8px; display: none; }
+    .comment-item { font-size: 12px; color: var(--text-secondary); padding: 6px 0; border-bottom: 0.5px solid var(--border-light); }
+    .comment-item:last-child { border-bottom: none; }
+    .comment-from { font-weight: 600; color: var(--text-primary); }
+    .dev-reply { display: flex; gap: 8px; margin-top: 8px; }
+    .dev-reply input {
+      flex: 1; font-size: 12px; padding: 6px 10px; border-radius: 6px;
+      border: 0.5px solid var(--border-mid); background: var(--bg-primary);
+      color: var(--text-primary); outline: none; font-family: inherit;
+    }
+    .dev-reply button {
+      font-size: 12px; padding: 6px 12px; border-radius: 6px;
+      border: 0.5px solid var(--border-mid); background: var(--bg-secondary);
+      color: var(--text-primary); cursor: pointer; font-family: inherit;
+    }
+    .status-change { font-size: 11px; margin-top: 8px; color: var(--text-tertiary); }
+    .status-change select {
+      font-size: 11px; padding: 3px 6px; border-radius: 4px;
+      border: 0.5px solid var(--border-mid); background: var(--bg-primary);
+      color: var(--text-secondary); outline: none; cursor: pointer; font-family: inherit; margin-left: 4px;
+    }
+    .deve-count { font-size: 12px; color: var(--text-tertiary); }
+    .deve-count span { font-weight: 600; color: #A32D2D; }
+
+    /* ===== LOGIN ITEMS ===== */
+    .login-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .login-item { border: 0.5px solid var(--border-light); border-radius: var(--radius-md); padding: 12px 14px; }
+    .login-item:hover { border-color: var(--border-mid); }
+    .login-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .login-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .login-fields { display: grid; grid-template-columns: 52px 1fr; gap: 4px 12px; font-size: 12px; }
+    .login-label { color: var(--text-tertiary); display: flex; align-items: center; }
+    .login-val { font-family: monospace; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .pass-mask { color: var(--text-tertiary); letter-spacing: 2px; }
+    .reveal-btn, .copy-btn {
+      font-size: 10px; padding: 2px 7px; border-radius: 4px;
+      border: 0.5px solid var(--border-light); background: transparent;
+      color: var(--text-secondary); cursor: pointer; font-family: inherit;
+    }
+    .reveal-btn:hover, .copy-btn:hover { background: var(--bg-secondary); }
+    .copy-btn.copied { color: #0F6E56; border-color: #0F6E56; }
+
+    /* ===== QUICK LINKS ===== */
+    .quick-links { background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 14px 16px; margin-top: 20px; }
+    .quick-title { font-size: 11px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+    .link-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .link-chip {
+      padding: 5px 14px; background: var(--bg-primary); border: 0.5px solid var(--border-light);
+      border-radius: 20px; font-size: 12px; color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+    }
+    .link-chip:hover { border-color: var(--border-mid); color: var(--text-primary); }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg-primary); border-radius: var(--radius-xl);
+      border: 0.5px solid var(--border-light); padding: 24px;
+      width: min(520px, 92vw); max-height: 88vh; overflow-y: auto;
+      box-shadow: var(--shadow-md);
+    }
+    .modal-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+    .modal-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .modal-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-tertiary); line-height: 1; padding: 0; }
+    .modal-close:hover { color: var(--text-primary); }
+    .form-row { margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; display: block; font-weight: 500; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; font-size: 13px; padding: 8px 10px;
+      border-radius: 6px; border: 0.5px solid var(--border-mid);
+      background: var(--bg-primary); color: var(--text-primary); outline: none; font-family: inherit;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #378ADD; }
+    .form-textarea { resize: vertical; min-height: 90px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+    .modal-search {
+      width: 100%; font-size: 13px; padding: 8px 10px;
+      border-radius: 6px; border: 0.5px solid var(--border-mid);
+      background: var(--bg-primary); color: var(--text-primary);
+      outline: none; margin-bottom: 12px; font-family: inherit;
+    }
+    .modal-search:focus { border-color: #378ADD; }
+
+    a { color: #185FA5; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .main { padding: 16px; }
+    }
+    @media (max-width: 480px) {
+      .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-<div class="sidebar">
-  <div class="logo"><h1>AIBOT PORTAL</h1><span>社内管理システム</span></div>
-  <nav class="nav">
-    <div class="nav-group">
-      <div class="nav-group-label">メイン</div>
-      <div class="nav-item active" onclick="showPage('home',this)"><span class="icon">🏠</span>ホーム</div>
-    </div>
-    <div class="nav-group">
-      <div class="nav-group-label">AI MARKE</div>
-      <div class="nav-item" onclick="showPage('bot',this)"><span class="icon">🤖</span>稼働中BOT管理表</div>
-      <div class="nav-item" onclick="showPage('sites',this)"><span class="icon">🔑</span>サイトログイン情報</div>
-      <div class="nav-item" onclick="showPage('servers',this)"><span class="icon">🖥</span>サーバー管理</div>
-    </div>
-    <div class="nav-group">
-      <div class="nav-group-label">外部リンク</div>
-      <div class="nav-item" onclick="openLink('https://ai-bot.co.jp/')"><span class="icon">🌐</span>公式サイト</div>
-      <div class="nav-item" onclick="openLink('https://linext-media.com/')"><span class="icon">📰</span>LINEXT</div>
-    </div>
-  </nav>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">AI</div>
+    <div class="topbar-title">AIBOT 社内ポータル</div>
+  </div>
+  <div class="topbar-date" id="topbar-date"></div>
 </div>
-<div class="main">
-  <!-- HOME -->
-  <div id="page-home" class="page active">
-    <div class="topbar"><h2>🏠 ホーム</h2><div class="topbar-right"><span class="badge" id="today-date"></span></div></div>
-    <div class="content">
-      <div class="stats-grid">
-        <div class="stat-card"><div class="num" style="color:var(--green)" id="stat-active">0</div><div class="lbl">🟢 稼働中BOT</div></div>
-        <div class="stat-card"><div class="num" style="color:var(--yellow)" id="stat-cancel">0</div><div class="lbl">⚠ 解約予定</div></div>
-        <div class="stat-card"><div class="num" style="color:var(--accent)" id="stat-sites">0</div><div class="lbl">🔑 サイト登録数</div></div>
-        <div class="stat-card"><div class="num" style="color:var(--accent2)" id="stat-servers">0</div><div class="lbl">🖥 サーバー登録数</div></div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">メニュー</div>
+      <div class="sidebar-item active" onclick="showPage('home', this)">
+        <span class="sidebar-icon">🏠</span> ホーム
       </div>
-      <div class="card">
-        <div class="card-header"><h3>📌 クイックリンク</h3></div>
-        <div class="card-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-          <button class="btn btn-ghost" onclick="showPage('bot',document.querySelectorAll('.nav-item')[1])">🤖 BOT管理表</button>
-          <button class="btn btn-ghost" onclick="showPage('sites',document.querySelectorAll('.nav-item')[2])">🔑 ログイン情報</button>
-          <button class="btn btn-ghost" onclick="showPage('servers',document.querySelectorAll('.nav-item')[3])">🖥 サーバー管理</button>
-          <button class="btn btn-ghost" onclick="openLink('https://ai-bot.co.jp/')">🌐 公式サイト</button>
-          <button class="btn btn-ghost" onclick="openLink('https://linext-media.com/')">📰 LINEXT</button>
-          <button class="btn btn-ghost" onclick="openLink('https://shota13220.github.io/portal/')">🔗 このポータル</button>
-        </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">AI MARKE</div>
+      <div class="sidebar-item" onclick="showPage('marke-sales', this)">
+        <span class="sidebar-icon">📊</span> 営業推進チーム
       </div>
-      <div class="card">
-        <div class="card-header"><h3>⚠ 解約予定のBOT一覧</h3></div>
-        <div class="card-body" id="cancel-list-home"></div>
+      <div class="sidebar-item" onclick="showPage('marke-ops', this)">
+        <span class="sidebar-icon">🗂️</span> 運用支援チーム
+      </div>
+      <div class="sidebar-item" onclick="showPage('marke-bot', this)">
+        <span class="sidebar-icon">🤖</span> BOT管理表
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">AI Deve</div>
+      <div class="sidebar-item" onclick="showPage('deve-main', this)">
+        <span class="sidebar-icon">⚙️</span> 開発ツール
+      </div>
+      <div class="sidebar-item" onclick="showPage('deve-requests', this)">
+        <span class="sidebar-icon">📬</span> LIBOT要望ボード
+        <span class="sidebar-badge" id="sidebar-new-count">0</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">総務</div>
+      <div class="sidebar-item" onclick="showPage('soumu', this)">
+        <span class="sidebar-icon">🏢</span> 総務
       </div>
     </div>
   </div>
-  <!-- BOT -->
-  <div id="page-bot" class="page">
-    <div class="topbar"><h2>🤖 稼働中BOT管理表</h2><div class="topbar-right"><span class="badge" id="bot-count-badge">0件</span></div></div>
-    <div class="content">
-      <div class="filter-bar">
-        <input type="text" id="bot-search" placeholder="🔍 会社名・アカウント名で検索..." oninput="renderBots()">
-        <select id="bot-filter-cancel" onchange="renderBots()">
-          <option value="">すべて表示</option>
-          <option value="normal">通常のみ</option>
-          <option value="cancel">解約予定のみ</option>
-        </select>
-        <select id="bot-sort" onchange="renderBots()">
-          <option value="date-desc">申込日 新しい順</option>
-          <option value="date-asc">申込日 古い順</option>
-          <option value="company">会社名順</option>
-          <option value="friends">友達数順</option>
-        </select>
-        <span id="bot-count-text" style="color:var(--text3);font-size:12px"></span>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ===== HOME ===== -->
+    <div class="page active" id="page-home">
+      <div class="page-title">おつかれさまです 👋</div>
+      <div class="page-sub">今日もよろしく。よく使うメニューはここから。</div>
+
+      <div class="section-label">AI MARKE</div>
+      <div class="grid-3" style="margin-bottom:16px;">
+        <div class="card c-blue" onclick="showPage('marke-sales', null)">
+          <div class="card-icon">📊</div>
+          <div class="card-title">営業推進チーム</div>
+          <div class="card-desc">顧客リスト・商談録画・五カ年計画</div>
+          <div class="card-arrow">→</div>
+        </div>
+        <div class="card c-teal" onclick="showPage('marke-ops', null)">
+          <div class="card-icon">🗂️</div>
+          <div class="card-title">運用支援チーム</div>
+          <div class="card-desc">クライアント管理・オンボーディング</div>
+          <div class="card-arrow">→</div>
+        </div>
+        <div class="card c-purple" onclick="showPage('marke-bot', null)">
+          <div class="card-icon">🤖</div>
+          <div class="card-title">稼働中のBOT管理表</div>
+          <div class="card-desc">稼働アカウント・プラン・担当者</div>
+          <div class="card-arrow">→</div>
+        </div>
       </div>
-      <div class="card">
-        <div style="overflow-x:auto">
-          <table class="tbl">
-            <thead><tr><th>#</th><th>会社名</th><th>アカウント名</th><th>友達数</th><th>申込日</th><th>ステータス</th></tr></thead>
+
+      <div class="section-label">AI Deve</div>
+      <div class="grid-3" style="margin-bottom:16px;">
+        <div class="card c-purple" onclick="showPage('deve-main', null)">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">開発ツール</div>
+          <div class="card-desc">ドキュメント・サーバー・バグ管理</div>
+          <div class="card-arrow">→</div>
+        </div>
+        <div class="card c-coral" onclick="showPage('deve-requests', null)">
+          <div class="card-icon">📬</div>
+          <div class="card-title">LIBOT要望ボード</div>
+          <div class="card-desc">営業・運用からの声を確認・対応</div>
+          <div class="card-arrow">→</div>
+        </div>
+        <div class="card c-amber" onclick="showPage('soumu', null)">
+          <div class="card-icon">🏢</div>
+          <div class="card-title">総務</div>
+          <div class="card-desc">社内規定・休暇申請・組織図</div>
+          <div class="card-arrow">→</div>
+        </div>
+      </div>
+
+      <div class="quick-links">
+        <div class="quick-title">よく使うリンク</div>
+        <div class="link-row">
+          <div class="link-chip" onclick="openLink('https://libot.jp')">LIBOT 管理画面</div>
+          <div class="link-chip" onclick="openLink('https://drive.google.com')">Google Drive</div>
+          <div class="link-chip" onclick="openLink('https://slack.com')">Slack</div>
+          <div class="link-chip" onclick="openLink('https://notion.so')">Notion</div>
+          <div class="link-chip" onclick="openLink('https://freee.co.jp')">Freee</div>
+          <div class="link-chip" onclick="openLink('https://zoom.us')">Zoom</div>
+          <div class="link-chip" onclick="openLink('https://chatwork.com')">ChatWork</div>
+          <div class="link-chip" onclick="openLink('https://github.com')">GitHub</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MARKE 営業推進 ===== -->
+    <div class="page" id="page-marke-sales">
+      <div class="page-title">営業推進チーム</div>
+      <div class="page-sub">新規獲得・商談・パイプライン管理</div>
+      <div class="team-header"><span class="team-badge badge-sales">営業推進チーム</span></div>
+      <div class="grid-3">
+        <div class="card c-blue"><div class="card-icon">👥</div><div class="card-title">顧客リスト</div><div class="card-desc">商談中・見込み顧客の一覧管理</div><div class="card-arrow">→</div></div>
+        <div class="card c-coral"><div class="card-icon">🎬</div><div class="card-title">商談録画</div><div class="card-desc">Zoom録画・商談メモの蓄積</div><div class="card-arrow">→</div></div>
+        <div class="card c-purple"><div class="card-icon">📈</div><div class="card-title">五カ年計画</div><div class="card-desc">KPI・売上目標・事業計画</div><div class="card-arrow">→</div></div>
+        <div class="card c-amber"><div class="card-icon">📁</div><div class="card-title">営業資料</div><div class="card-desc">提案書・トークスクリプト</div><div class="card-arrow">→</div></div>
+        <div class="card c-teal"><div class="card-icon">🤝</div><div class="card-title">代理店管理</div><div class="card-desc">パートナー・代理店一覧</div><div class="card-arrow">→</div></div>
+        <div class="card c-pink" onclick="openRequestModal('営業推進')"><div class="card-icon">💬</div><div class="card-title">LIBOT要望を送る</div><div class="card-desc">商談で出た意見をDeveへ</div><div class="card-arrow">→</div></div>
+      </div>
+    </div>
+
+    <!-- ===== MARKE 運用支援 ===== -->
+    <div class="page" id="page-marke-ops">
+      <div class="page-title">運用支援チーム</div>
+      <div class="page-sub">既存クライアントの継続サポート・定着</div>
+      <div class="team-header"><span class="team-badge badge-ops">運用支援チーム</span></div>
+      <div class="grid-3">
+        <div class="card c-teal"><div class="card-icon">🗂️</div><div class="card-title">クライアント管理</div><div class="card-desc">顧客別施策・進捗・ステータス</div><div class="card-arrow">→</div></div>
+        <div class="card c-blue"><div class="card-icon">🚀</div><div class="card-title">オンボーディング管理</div><div class="card-desc">新規導入フロー・チェックリスト</div><div class="card-arrow">→</div></div>
+        <div class="card c-purple"><div class="card-icon">📄</div><div class="card-title">お客様向け資料集</div><div class="card-desc">説明資料・マニュアル・FAQ</div><div class="card-arrow">→</div></div>
+        <div class="card c-pink" onclick="openRequestModal('運用支援')"><div class="card-icon">💬</div><div class="card-title">LIBOT要望を送る</div><div class="card-desc">クライアントの声をDeveへ</div><div class="card-arrow">→</div></div>
+      </div>
+    </div>
+
+    <!-- ===== BOT管理表 ===== -->
+    <div class="page" id="page-marke-bot">
+      <div class="page-title">稼働中のBOT管理表</div>
+      <div class="page-sub">稼働中・停止中のLINE BOTアカウントを一元管理</div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">🤖 稼働アカウント一覧</div>
+          <div class="panel-actions">
+            <button class="btn btn-login" onclick="openLoginModal()">🔑 ログイン情報</button>
+            <button class="btn">+ 追加</button>
+          </div>
+        </div>
+        <div class="search-row">
+          <input class="search-input" type="text" placeholder="クライアント名・業種で絞り込み..." oninput="filterBot(this.value)">
+          <select class="filter-select" onchange="filterBotStatus(this.value)">
+            <option value="">すべて</option>
+            <option value="稼働中">稼働中</option>
+            <option value="一時停止">一時停止</option>
+            <option value="停止">停止</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ステータス</th>
+                <th>クライアント名</th>
+                <th>業種</th>
+                <th>プラン</th>
+                <th>LINEアカウント名</th>
+                <th>担当者</th>
+                <th>契約開始</th>
+                <th>管理画面</th>
+              </tr>
+            </thead>
             <tbody id="bot-tbody"></tbody>
           </table>
         </div>
       </div>
-      <div class="pagination">
-        <button onclick="botPage(-1)" id="bot-prev">← 前</button>
-        <span class="page-info" id="bot-page-info"></span>
-        <button onclick="botPage(1)" id="bot-next">次 →</button>
+    </div>
+
+    <!-- ===== AI Deve メイン ===== -->
+    <div class="page" id="page-deve-main">
+      <div class="page-title">AI Deve</div>
+      <div class="page-sub">開発・システム管理</div>
+      <div class="team-header"><span class="team-badge badge-deve">AI Deve</span></div>
+      <div class="grid-3">
+        <div class="card c-purple"><div class="card-icon">⚙️</div><div class="card-title">開発ドキュメント</div><div class="card-desc">API仕様・設計書</div><div class="card-arrow">→</div></div>
+        <div class="card c-blue"><div class="card-icon">🖥️</div><div class="card-title">サーバー情報</div><div class="card-desc">本番・開発環境のログイン</div><div class="card-arrow">→</div></div>
+        <div class="card c-amber"><div class="card-icon">🐛</div><div class="card-title">バグ・課題管理</div><div class="card-desc">Issue・タスク一覧</div><div class="card-arrow">→</div></div>
       </div>
     </div>
-  </div>
-  <!-- SITES -->
-  <div id="page-sites" class="page">
-    <div class="topbar"><h2>🔑 サイトログイン情報</h2><div class="topbar-right"><button class="btn btn-primary" onclick="openAddSiteModal()">＋ 追加</button></div></div>
-    <div class="content">
-      <div class="filter-bar"><input type="text" id="site-search" placeholder="🔍 サイト名・URLで検索..." oninput="renderSites()"></div>
-      <div class="card">
-        <div style="overflow-x:auto">
-          <table class="tbl">
-            <thead><tr><th>#</th><th>サイト名</th><th>URL</th><th>ユーザー名</th><th>パスワード</th><th>操作</th></tr></thead>
-            <tbody id="site-tbody"></tbody>
-          </table>
+
+    <!-- ===== 要望ボード ===== -->
+    <div class="page" id="page-deve-requests">
+      <div class="page-title">LIBOT 要望ボード</div>
+      <div class="page-sub">営業・運用チームからの声をここで確認・対応</div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📬 受信した要望・フィードバック</div>
+          <div class="deve-count">未対応: <span id="deve-new-count">0</span>件</div>
         </div>
-      </div>
-    </div>
-  </div>
-  <!-- SERVERS -->
-  <div id="page-servers" class="page">
-    <div class="topbar"><h2>🖥 サーバー管理（Xserver）</h2></div>
-    <div class="content">
-      <div class="card">
-        <div style="overflow-x:auto">
-          <table class="tbl">
-            <thead><tr><th>#</th><th>Xserver ID</th><th>パスワード</th><th>管理ドメイン</th><th>操作</th></tr></thead>
-            <tbody id="server-tbody"></tbody>
-          </table>
+        <div class="filter-tabs">
+          <button class="ftab active" onclick="filterRequests('all',this)">すべて</button>
+          <button class="ftab" onclick="filterRequests('新規',this)">🔴 新規</button>
+          <button class="ftab" onclick="filterRequests('確認中',this)">🟡 確認中</button>
+          <button class="ftab" onclick="filterRequests('対応中',this)">🔵 対応中</button>
+          <button class="ftab" onclick="filterRequests('完了',this)">🟢 完了</button>
         </div>
+        <div class="request-list" id="deve-request-list"></div>
       </div>
     </div>
+
+    <!-- ===== 総務 ===== -->
+    <div class="page" id="page-soumu">
+      <div class="page-title">総務</div>
+      <div class="page-sub">社内手続き・規定・組織情報</div>
+      <div class="team-header"><span class="team-badge badge-soumu">総務</span></div>
+      <div class="grid-3">
+        <div class="card c-blue"><div class="card-icon">📋</div><div class="card-title">社内規定</div><div class="card-desc">就業規則・ルール集</div><div class="card-arrow">→</div></div>
+        <div class="card c-teal"><div class="card-icon">🏖️</div><div class="card-title">休暇申請</div><div class="card-desc">有給・申請フォーム</div><div class="card-arrow">→</div></div>
+        <div class="card c-purple"><div class="card-icon">🏢</div><div class="card-title">組織図</div><div class="card-desc">部署・メンバー構成</div><div class="card-arrow">→</div></div>
+        <div class="card c-amber"><div class="card-icon">🚆</div><div class="card-title">交通費精算</div><div class="card-desc">月末締め・申請フォーム</div><div class="card-arrow">→</div></div>
+        <div class="card c-coral"><div class="card-icon">📤</div><div class="card-title">出張申請</div><div class="card-desc">出張ルール・手続き</div><div class="card-arrow">→</div></div>
+        <div class="card c-pink"><div class="card-icon">❓</div><div class="card-title">相談窓口</div><div class="card-desc">困ったことはここへ</div><div class="card-arrow">→</div></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ===== ログイン情報モーダル ===== -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">🔑 サイト・サービス ログイン情報</div>
+        <div class="modal-sub">パスワードは必要な時だけ表示してください</div>
+      </div>
+      <button class="modal-close" onclick="closeLoginModal()">×</button>
+    </div>
+    <input class="modal-search" type="text" placeholder="サービス名で絞り込み..." oninput="filterLogin(this.value)">
+    <div class="login-list" id="login-list"></div>
   </div>
 </div>
 
-<!-- SITE DETAIL MODAL -->
-<div class="modal-overlay" id="site-modal">
+<!-- ===== 要望投稿モーダル ===== -->
+<div class="modal-overlay" id="request-modal">
   <div class="modal">
-    <div class="modal-header"><h3 id="modal-site-title">ログイン情報詳細</h3><button class="modal-close" onclick="closeModal('site-modal')">✕</button></div>
-    <div class="modal-body" id="modal-site-body"></div>
-  </div>
-</div>
-<!-- ADD SITE MODAL -->
-<div class="modal-overlay" id="add-site-modal">
-  <div class="modal">
-    <div class="modal-header"><h3>🔑 サイトログイン情報を追加</h3><button class="modal-close" onclick="closeModal('add-site-modal')">✕</button></div>
-    <div class="modal-body">
-      <div class="form-row"><div class="form-group"><label class="form-label">サイト名 *</label><input class="form-input" id="add-name" placeholder="例: 株式会社〇〇"></div><div class="form-group"><label class="form-label">URL *</label><input class="form-input" id="add-url" placeholder="https://example.com"></div></div>
-      <div class="form-group"><label class="form-label">管理者URL</label><input class="form-input" id="add-admin-url" placeholder="https://example.com/wp-admin/"></div>
-      <div class="form-row"><div class="form-group"><label class="form-label">ユーザー名</label><input class="form-input" id="add-user" placeholder="admin@example.com"></div><div class="form-group"><label class="form-label">パスワード</label><input class="form-input" id="add-pw" placeholder="パスワード"></div></div>
-      <div class="form-row"><div class="form-group"><label class="form-label">2つ目ユーザー名（任意）</label><input class="form-input" id="add-user2"></div><div class="form-group"><label class="form-label">2つ目パスワード（任意）</label><input class="form-input" id="add-pw2"></div></div>
-      <div style="display:flex;gap:10px;margin-top:4px"><button class="btn btn-primary" onclick="addSite()">保存</button><button class="btn btn-ghost" onclick="closeModal('add-site-modal')">キャンセル</button></div>
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">💬 LIBOT 要望・フィードバックを送る</div>
+        <div class="modal-sub">具体的に書くとDeveが動きやすいです</div>
+      </div>
+      <button class="modal-close" onclick="closeRequestModal()">×</button>
+    </div>
+    <div class="form-row">
+      <label class="form-label">投稿チーム</label>
+      <input class="form-input" id="form-team" readonly style="background:var(--bg-secondary);color:var(--text-secondary);">
+    </div>
+    <div class="form-row">
+      <label class="form-label">投稿者名</label>
+      <input class="form-input" id="form-author" placeholder="例：田中">
+    </div>
+    <div class="form-row">
+      <label class="form-label">タイトル</label>
+      <input class="form-input" id="form-title" placeholder="例：一斉配信の文字数制限を増やしてほしい">
+    </div>
+    <div class="form-row">
+      <label class="form-label">種別</label>
+      <select class="form-select" id="form-tag">
+        <option value="機能追加">機能追加</option>
+        <option value="改善">改善</option>
+        <option value="バグ">バグ</option>
+        <option value="質問">質問</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">詳細・商談での声</label>
+      <textarea class="form-textarea" id="form-body" placeholder="どんな場面で出た声か、どのクライアントで課題になっているかを具体的に"></textarea>
+    </div>
+    <div class="form-row">
+      <label class="form-label">関連クライアント（任意）</label>
+      <input class="form-input" id="form-client" placeholder="例：美容室〇〇様、不動産△△様">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeRequestModal()">キャンセル</button>
+      <button class="btn btn-new" onclick="submitRequest()">送信する</button>
     </div>
   </div>
 </div>
-<div class="toast" id="toast"></div>
 
 <script>
-<script>
-const RAW_DATA = {"bots": [{"company": "日本介護システム株式会社", "account": "Kamibito", "friends": "2", "date": "2025-12-02", "cancel": "", "no_material": "✕"}, {"company": "株式会社トータル・ワン", "account": "", "friends": "3", "date": "2025-07-29", "cancel": "", "no_material": "✕"}, {"company": "宮崎誉己", "account": "Select Luxe Outlet", "friends": "9", "date": "2025-10-27", "cancel": "", "no_material": ""}, {"company": "マルヒロ不動産株式会社", "account": "マルヒロ不動産・売却窓口", "friends": "9", "date": "2025-07-09", "cancel": "", "no_material": "✕"}, {"company": "有限会社グローバル・リンクス", "account": "GL ETF", "friends": "205", "date": "2025-04-12", "cancel": "", "no_material": ""}, {"company": "株式会社ワールドインパクト", "account": "SNS集客ワンストップ", "friends": "55", "date": "2023-11-26", "cancel": "", "no_material": "✕"}, {"company": "草光建設株式会社", "account": "草光建設株式会社", "friends": "2", "date": "2025-12-15", "cancel": "", "no_material": ""}, {"company": "株式会社フィード", "account": "株式会社フィード", "friends": "2", "date": "2024-08-05", "cancel": "7/3解約手続き", "no_material": ""}, {"company": "株式会社田村工務店", "account": "田村工務店", "friends": "2", "date": "2024-07-06", "cancel": "6/28解約手続き", "no_material": ""}, {"company": "川畑　貴志", "account": "命食おにぎり酵素玄米", "friends": "2", "date": "2024-06-27", "cancel": "6/28解約手続き", "no_material": ""}, {"company": "株式会社ビィゴライフ", "account": "VIGOLIFE", "friends": "1", "date": "2024-08-05", "cancel": "6/27解約手続き", "no_material": ""}, {"company": "Open Sales株式会社", "account": "UMIDAS", "friends": "-", "date": "2026-01-21", "cancel": "", "no_material": ""}, {"company": "株式会社epi&company", "account": "&CASTING", "friends": "-", "date": "2025-07-07", "cancel": "", "no_material": ""}, {"company": "医療法人まぶたラボ", "account": "ひふみるクリニック", "friends": "-", "date": "2026-01-21", "cancel": "", "no_material": ""}, {"company": "株式会社AIファンズクリエイト", "account": "株式会社AIファンズクリエイト", "friends": "-", "date": "2024-05-17", "cancel": "4/17解約手続き", "no_material": ""}, {"company": "株式会社Ludens", "account": "株式会社Ludens", "friends": "-", "date": "2024-05-02", "cancel": "6/13解約手続き", "no_material": ""}, {"company": "YOUR'sWAY株式会社", "account": "YOUR'sWAY株式会社", "friends": "-", "date": "2024-03-07", "cancel": "5/22解約手続き", "no_material": ""}, {"company": "株式会社ピュアエッジ", "account": "BIOACCEL", "friends": "-", "date": "2026-01-21", "cancel": "", "no_material": ""}, {"company": "STUDIO NAGAYU", "account": "株式会社PEK", "friends": "-", "date": "2025-11-09", "cancel": "", "no_material": "✕"}, {"company": "株式会社モアソビ", "account": "古町夜市", "friends": "-", "date": "2025-07-09", "cancel": "", "no_material": "✕"}, {"company": "有限会社ニシオ不動産", "account": "KURASH工務店×70年代不動産", "friends": "-", "date": "2025-06-06", "cancel": "", "no_material": ""}, {"company": "大森航斗", "account": "井口の囲炉裏 運営", "friends": "-", "date": "2026-02-25", "cancel": "", "no_material": ""}, {"company": "株式会社マルダイ建設", "account": "STYLIAHOUSE", "friends": "-", "date": "2026-02-17", "cancel": "", "no_material": ""}, {"company": "株式会社PeCo", "account": "Knot BAR 六本木", "friends": "-", "date": "2025-11-14", "cancel": "", "no_material": ""}, {"company": "株式会社コレット", "account": "*Collet*（コレット）", "friends": "-", "date": "2025-09-17", "cancel": "", "no_material": "✕"}, {"company": "合同会社IBMED", "account": "J.urbantouch_Ginza", "friends": "-", "date": "2025-09-08", "cancel": "", "no_material": "✕"}, {"company": "株式会社Well Gro Fit", "account": "ヒップアップジム公式アカウント", "friends": "-", "date": "2026-01-21", "cancel": "", "no_material": ""}, {"company": "株式会社MAXIVPLUS", "account": "株式会社MAXIVPLUS", "friends": "-", "date": "", "cancel": "", "no_material": "✕"}, {"company": "有限会社ピアサンジューキュー", "account": "Pier39", "friends": "-", "date": "2025-07-29", "cancel": "", "no_material": ""}, {"company": "一般社団法人スポーツクラブバンブルビー白石", "account": "バンブルビー白石", "friends": "-", "date": "2025-04-24", "cancel": "", "no_material": ""}, {"company": "ねこねこ堂", "account": "ブランド品買取販売　ねこねこ堂", "friends": "-", "date": "2025-06-09", "cancel": "", "no_material": ""}, {"company": "株式会社Wconnect", "account": "iPhone・iPad修理あいあい仙台店", "friends": "-", "date": "2025-06-12", "cancel": "", "no_material": ""}, {"company": "合同会社Circular Thanks", "account": "Sanbika-山美果-", "friends": "-", "date": "2025-06-09", "cancel": "", "no_material": "✕"}, {"company": "株式会社バリューエージェンシー", "account": "ニューウェルシティ出雲", "friends": "-", "date": "2025-08-05", "cancel": "", "no_material": "✕"}, {"company": "株式会社イービリーブ", "account": "株式会社イースマイル", "friends": "-", "date": "2025-06-07", "cancel": "", "no_material": "✕"}, {"company": "株式会社バリューエージェンシー", "account": "湖畔の温泉宿　くにびき", "friends": "-", "date": "2024-08-05", "cancel": "6/27解約手続き", "no_material": ""}, {"company": "株式会社Vicamo", "account": "Sartoria Fiero", "friends": "-", "date": "2025-04-26", "cancel": "", "no_material": "✕"}, {"company": "有限会社益野製菓", "account": "アルパジョン", "friends": "-", "date": "2025-07-09", "cancel": "", "no_material": ""}, {"company": "株式会社HUG", "account": "タイヤトリップ", "friends": "-", "date": "2025-04-14", "cancel": "", "no_material": "✕"}, {"company": "マチオコシ株式会社", "account": "イースマイル株式会社", "friends": "-", "date": "2025-06-23", "cancel": "", "no_material": ""}, {"company": "地方職員共済組合繋保養所 清温荘", "account": "【公式】盛岡つなぎ温泉　清温荘", "friends": "-", "date": "2025-06-11", "cancel": "", "no_material": "✕"}, {"company": "Asantech株式会社", "account": "INSENSE", "friends": "-", "date": "2025-04-26", "cancel": "", "no_material": ""}, {"company": "株式会社メディカルギフト", "account": "Taishi", "friends": "-", "date": "2025-05-28", "cancel": "", "no_material": ""}, {"company": "上野龍馬", "account": "株式会社情熱の風", "friends": "-", "date": "2024-10-29", "cancel": "", "no_material": ""}, {"company": "マチオコシ株式会社", "account": "有限会社斎建工業", "friends": "-", "date": "2025-04-13", "cancel": "", "no_material": ""}, {"company": "マチオコシ株式会社", "account": "株式会社PaintTOMY", "friends": "-", "date": "2025-04-09", "cancel": "", "no_material": ""}, {"company": "株式会社Soa't", "account": "Soa'tアルティマコート公式", "friends": "-", "date": "2024-08-08", "cancel": "6/26解約手続き", "no_material": ""}, {"company": "豊島株式会社", "account": "BUZZU studio（バズスタ）", "friends": "-", "date": "2024-12-02", "cancel": "", "no_material": ""}, {"company": "株式会社クラセルエステート", "account": "㈱クラセルエステート　公式LINE", "friends": "-", "date": "2024-07-23", "cancel": "6/27解約手続き", "no_material": ""}, {"company": "鍼灸整骨院　S-LAB", "account": "鍼灸整骨院　S-LAB", "friends": "-", "date": "2024-09-30", "cancel": "", "no_material": ""}, {"company": "WiTH株式会社", "account": "Workout Base WiTH", "friends": "-", "date": "", "cancel": "", "no_material": ""}, {"company": "株式会社LEALE（L.E.M）", "account": "L.E.M 仙台店", "friends": "-", "date": "", "cancel": "", "no_material": ""}, {"company": "株式会社ドライブヨーク", "account": "KURUMARU ONE", "friends": "-", "date": "", "cancel": "", "no_material": ""}, {"company": "（有）オートカンパニー", "account": "オートカンパニー", "friends": "-", "date": "", "cancel": "", "no_material": ""}, {"company": "ACONE", "account": "ACONE", "friends": "-", "date": "2025-02-12", "cancel": "", "no_material": ""}, {"company": "TWIST株式会社", "account": "TWIST", "friends": "-", "date": "", "cancel": "", "no_material": ""}, {"company": "株式会社SJ", "account": "プライベートサロン 【enatto】", "friends": "-", "date": "2024-08-07", "cancel": "7/3解約手続き", "no_material": ""}, {"company": "あざぶ法律事務所", "account": "こうたろす弁護士【男女トラブル相談】", "friends": "-", "date": "2024-10-04", "cancel": "", "no_material": ""}, {"company": "一般社団法人HINATA", "account": "HINATAクリニック", "friends": "-", "date": "2024-07-16", "cancel": "", "no_material": ""}, {"company": "株式会社アンドワイ", "account": "FP個別相談窓口", "friends": "-", "date": "2024-11-22", "cancel": "", "no_material": ""}, {"company": "Gentiana", "account": "Gentiana", "friends": "-", "date": "", "cancel": "", "no_material": ""}, {"company": "株式会社アドインテ", "account": "AIICO｜サンプリング自動販売機", "friends": "-", "date": "2024-02-19", "cancel": "", "no_material": ""}, {"company": "柴田剛史", "account": "おそうじ本舗 瀬戸口店・千種星ヶ丘店", "friends": "-", "date": "2024-10-16", "cancel": "", "no_material": ""}, {"company": "株式会社Bin5", "account": "Bin5_renovation", "friends": "-", "date": "2024-06-03", "cancel": "6/28解約手続き", "no_material": ""}, {"company": "PST コンサルティング株式会社", "account": "PSTコンサルティング株式会社", "friends": "-", "date": "2024-06-24", "cancel": "6/19解約手続き", "no_material": ""}, {"company": "有限会社エイトノット", "account": "        麹町ゴルフ予約専用LINE@", "friends": "-", "date": "2024-08-23", "cancel": "", "no_material": ""}, {"company": "株式会社ロードナイン", "account": "【公式】株式会社ロードナイン", "friends": "-", "date": "", "cancel": "", "no_material": ""}, {"company": "マチオコシ株式会社", "account": "マチオコシ株式会社", "friends": "-", "date": "2024-10-10", "cancel": "", "no_material": ""}, {"company": "JAPAN REAL ESTATE株式会社", "account": "お金の学校", "friends": "-", "date": "2024-02-29", "cancel": "", "no_material": ""}, {"company": "しかまハウス株式会社", "account": "しかまハウス", "friends": "-", "date": "2024-08-09", "cancel": "", "no_material": ""}, {"company": "ジェイシップセントラル株式会社", "account": "アスリート学生就活サポート J-SHIP", "friends": "-", "date": "2024-03-06", "cancel": "5/24解約手続き", "no_material": ""}, {"company": "and life's 合同会社", "account": "& HouSE.", "friends": "-", "date": "2024-08-09", "cancel": "5/25解約手続き", "no_material": ""}, {"company": "株式会社Beefull Place", "account": "焼肉ROPPEN公式", "friends": "-", "date": "2024-08-06", "cancel": "5/29解約手続き", "no_material": ""}, {"company": "株式会社東京ミライズ", "account": "株式会社東京ミライズ", "friends": "-", "date": "2024-05-11", "cancel": "6/6解約手続き", "no_material": ""}, {"company": "株式会社MAXIV PLUS", "account": "株式会社MAXIV PLUS", "friends": "-", "date": "", "cancel": "6/8解約手続き", "no_material": ""}, {"company": "株式会社アイホク", "account": "（株）アイホク", "friends": "-", "date": "2024-07-05", "cancel": "6/12解約手続き", "no_material": ""}, {"company": "未来しこう株式会社", "account": "マンション運用のお勉強", "friends": "-", "date": "2024-08-08", "cancel": "6/25解約手続き", "no_material": ""}, {"company": "株式会社ALGX", "account": "Lumina", "friends": "-", "date": "2024-04-13", "cancel": "", "no_material": ""}, {"company": "こと京都株式会社", "account": "こと京都 葱活", "friends": "-", "date": "2024-02-29", "cancel": "", "no_material": ""}, {"company": "株式会社ディープアライアンス", "account": "ディープアライアンス　公式アカウント", "friends": "-", "date": "2024-04-18", "cancel": "4/18解約手続き", "no_material": ""}, {"company": "株式会社シルクマスター", "account": "silkmasterSB", "friends": "-", "date": "2024-05-16", "cancel": "", "no_material": ""}, {"company": "一般社団法人Create support", "account": "Create support", "friends": "-", "date": "2024-05-04", "cancel": "27/2/15解約手続き", "no_material": ""}, {"company": "株式会社Y.K.F", "account": "Allez-y アレジィ 神戸三宮店", "friends": "-", "date": "2024-04-08", "cancel": "", "no_material": ""}, {"company": "株式会社conate", "account": "TF to the future", "friends": "-", "date": "2024-02-26", "cancel": "", "no_material": ""}, {"company": "DRP Association", "account": "債務相談の窓口", "friends": "-", "date": "2024-05-25", "cancel": "", "no_material": ""}, {"company": "Mipiman恵比寿（大橋美香）", "account": "Mipimam恵比寿店", "friends": "-", "date": "2024-06-06", "cancel": "", "no_material": ""}, {"company": "株式会社リプロス", "account": "株式会社リプロス", "friends": "-", "date": "2023-12-09", "cancel": "", "no_material": ""}, {"company": "日本デリバリーサービス株式会社", "account": "日本デリバリーサービス", "friends": "-", "date": "2023-10-24", "cancel": "", "no_material": ""}, {"company": "株式会社conate", "account": "つながるナース", "friends": "-", "date": "2024-04-11", "cancel": "", "no_material": ""}, {"company": "株式会社ビジネス＆コミュニティ", "account": "美容皮膚科ティファクリニック", "friends": "-", "date": "2024-03-08", "cancel": "", "no_material": ""}, {"company": "株式会社ホームメイド東京", "account": "株式会社ホームメイド東京", "friends": "-", "date": "2023-10-13", "cancel": "", "no_material": "✕"}, {"company": "株式会社ミサキグループ", "account": "\tRUNSO 北千住店", "friends": "-", "date": "2023-12-14", "cancel": "", "no_material": ""}, {"company": "株式会社ACT", "account": "株式会社ACT", "friends": "-", "date": "2023-10-19", "cancel": "", "no_material": "✕"}, {"company": "株式会社サンタフェ", "account": "株式会社サンタフェ", "friends": "-", "date": "2023-12-09", "cancel": "", "no_material": ""}, {"company": "楽ライフジャパン株式会社", "account": "楽ライフジャパン株式会社", "friends": "-", "date": "2024-01-10", "cancel": "", "no_material": "✕"}, {"company": "株式会社TRiE", "account": "肉とワインボナンザ", "friends": "-", "date": "2023-12-09", "cancel": "", "no_material": ""}, {"company": "株式会社フェニックス", "account": "銀座肌", "friends": "-", "date": "2024-03-10", "cancel": "4/30解約予定", "no_material": ""}, {"company": "西堀 浩也", "account": "西堀 浩也 ゴルフコミュニティ", "friends": "-", "date": "2024-03-12", "cancel": "", "no_material": ""}, {"company": "株式会社T-Spine", "account": "株式会社T-Spine", "friends": "-", "date": "2024-01-09", "cancel": "", "no_material": "✕"}, {"company": "株式会社SANS", "account": "だし焼肉 はし田", "friends": "-", "date": "2024-05-30", "cancel": "", "no_material": ""}, {"company": "Active HeRO合同会社", "account": "iDeALMe 公式LINE", "friends": "-", "date": "2024-08-22", "cancel": "", "no_material": "✕"}, {"company": "株式会社グローバルクラウドエステート", "account": "CAMEL公式（本部）", "friends": "-", "date": "2024-05-03", "cancel": "", "no_material": ""}, {"company": "株式会社B.L.S.　", "account": "IKUSAGAMI-軍神-", "friends": "-", "date": "2024-04-24", "cancel": "", "no_material": "✕"}, {"company": "株式会社Fine's", "account": "炭火焼Bar ホルモン'S", "friends": "-", "date": "2023-11-26", "cancel": "", "no_material": ""}, {"company": "株式会社Fine's", "account": "炭火焼Bar ホルモン’S", "friends": "-", "date": "2023-12-09", "cancel": "", "no_material": ""}, {"company": "株式会社エネプライム", "account": "エネプライム", "friends": "-", "date": "2023-12-09", "cancel": "", "no_material": ""}, {"company": "合同会社翔", "account": "目のトレーニング吉祥寺店👀", "friends": "-", "date": "2024-05-13", "cancel": "", "no_material": ""}, {"company": "稲葉 えり菜", "account": "講談師・一龍斎貞奈", "friends": "-", "date": "2024-03-05", "cancel": "", "no_material": ""}, {"company": "株式会社KD　graphic", "account": "株式会社KD　graphic", "friends": "-", "date": "2023-12-14", "cancel": "", "no_material": ""}, {"company": "株式会社エヴァー・グリーン", "account": "joker オフィシャル", "friends": "-", "date": "2023-11-30", "cancel": "", "no_material": ""}, {"company": "株式会社TOSHIN", "account": "株式会社TOSHIN", "friends": "-", "date": "2023-12-14", "cancel": "", "no_material": ""}, {"company": "清水和也", "account": "超能力占い師KAZU @体験セッションz", "friends": "-", "date": "2024-05-01", "cancel": "", "no_material": ""}, {"company": "マチオコシ株式会社", "account": "株式会社 Trance", "friends": "-", "date": "2024-02-13", "cancel": "", "no_material": ""}, {"company": "Eights株式会社", "account": "9High【新潟店】", "friends": "-", "date": "", "cancel": "", "no_material": ""}, {"company": "株式会社エレガンスヨシダ", "account": "エクシアホワイト　リーベル王寺店会員様用", "friends": "-", "date": "2023-08-21", "cancel": "", "no_material": "✕"}, {"company": "株式会社One’s Will", "account": "株式会社One’s Will", "friends": "-", "date": "2024-01-17", "cancel": "", "no_material": "✕"}, {"company": "株式会社エアトランク", "account": "エアトランク", "friends": "-", "date": "2023-12-12", "cancel": "", "no_material": ""}, {"company": "株式会社conate", "account": "【TF】To the future公式", "friends": "-", "date": "2024-02-26", "cancel": "", "no_material": ""}, {"company": "株式会社Anello", "account": "anello", "friends": "-", "date": "2023-08-21", "cancel": "", "no_material": "✕"}, {"company": "株式会社やきやま", "account": "株式会社やきやま", "friends": "-", "date": "2023-08-28", "cancel": "", "no_material": ""}, {"company": "小池輝明", "account": "ゆる恋", "friends": "-", "date": "2024-01-22", "cancel": "", "no_material": ""}, {"company": "マチオコシ株式会社", "account": "株式会社SPS", "friends": "-", "date": "2024-01-15", "cancel": "", "no_material": ""}, {"company": "マチオコシ株式会社", "account": "株式会社大石塗装", "friends": "-", "date": "2024-01-13", "cancel": "", "no_material": ""}, {"company": "山畑社会保険労務士事務所", "account": "1981 GOLF CLUB", "friends": "-", "date": "2023-05-26", "cancel": "", "no_material": ""}, {"company": "株式会社オフィス・アークワン", "account": "オフィス・アークワン", "friends": "-", "date": "2024-01-23", "cancel": "", "no_material": "✕"}, {"company": "ペピィ・ハッピー・プレイス", "account": "ペピイ・ハッピープレイス", "friends": "-", "date": "2023-10-20", "cancel": "", "no_material": ""}, {"company": "合同会社R.Playful(二個目）", "account": "LaboQuest（旧福ココ）", "friends": "-", "date": "2023-10-31", "cancel": "", "no_material": ""}, {"company": "Vin株式会社", "account": "ワイン通販 MICHIGAMIワイン", "friends": "-", "date": "2023-11-28", "cancel": "", "no_material": "✕"}, {"company": "株式会社ドリームライフマネジメント", "account": "DLM～マネLabo～", "friends": "-", "date": "2023-05-19", "cancel": "", "no_material": ""}, {"company": "株式会社Peco", "account": "人生ウマ組", "friends": "-", "date": "2023-09-21", "cancel": "", "no_material": ""}, {"company": "株式会社アドインテ", "account": "AIICO", "friends": "-", "date": "AIICO", "cancel": "", "no_material": ""}, {"company": "株式会社AIGIA", "account": "AIGIA", "friends": "-", "date": "2023-06-23", "cancel": "", "no_material": ""}, {"company": "株式会社ネクストライフエージェント", "account": "株式会社ネクストライフエージェント", "friends": "-", "date": "2023-05-19", "cancel": "", "no_material": ""}, {"company": "株式会社PALS.featurings", "account": "オンラインヨガAasha", "friends": "-", "date": "2023-05-01", "cancel": "", "no_material": ""}, {"company": "ファンズクリエイト株式会社", "account": "TSUYAHADA池袋店", "friends": "-", "date": "2023-08-04", "cancel": "", "no_material": ""}, {"company": "合同会社アイショルダー", "account": "長原環七通り接骨院", "friends": "-", "date": "2023-07-20", "cancel": "", "no_material": "✕"}, {"company": "柴田 慶孔", "account": "しばっち【チゲ＆カルビ】", "friends": "-", "date": "2023-06-05", "cancel": "", "no_material": "✕"}, {"company": "株式会社ヒューマンヴォイス", "account": "PONTE DE Mariage", "friends": "-", "date": "2023-05-25", "cancel": "", "no_material": ""}, {"company": "株式会社アンク", "account": "PlusAnq", "friends": "-", "date": "2023-02-06", "cancel": "", "no_material": ""}, {"company": "株式会社ninestyle", "account": "good nine", "friends": "-", "date": "2023-04-12", "cancel": "", "no_material": ""}, {"company": "株式会社ヒューマンヴォイス", "account": "Human Career Agency.", "friends": "-", "date": "2022-11-16", "cancel": "", "no_material": ""}, {"company": "株式会社ダッシュプラス", "account": "prefere", "friends": "-", "date": "2022-12-06", "cancel": "", "no_material": ""}, {"company": "一般社団法人全国大家の会", "account": "全国大家の会【公式LINE】", "friends": "-", "date": "2022-10-21", "cancel": "", "no_material": ""}, {"company": "タイヤトリップ(TIRE TRIP)", "account": "TIRE TRIP", "friends": "-", "date": "2022-12-05", "cancel": "", "no_material": ""}, {"company": "株式会社アイワホーム", "account": "【公式】学生ウォーカー", "friends": "-", "date": "2022-10-27", "cancel": "", "no_material": ""}, {"company": "株式会社あいほーむ", "account": "障がい者GHあいほーむ・ほわいとはうす", "friends": "-", "date": "2022-10-11", "cancel": "", "no_material": ""}, {"company": "産栄空調工業株式会社", "account": "まーじゃん Riverty", "friends": "-", "date": "2022-09-21", "cancel": "", "no_material": ""}, {"company": "NoLimit株式会社", "account": "9High【広島店】", "friends": "-", "date": "2022-09-14", "cancel": "", "no_material": "✕"}, {"company": "合同会社SevenForColors", "account": "【脱毛エステ】Platina", "friends": "-", "date": "2022-09-02", "cancel": "", "no_material": ""}, {"company": "株式会社BEHALF", "account": "株式会社BEHALF", "friends": "-", "date": "2022-05-01", "cancel": "", "no_material": ""}, {"company": "株式会社NOBLEMIND", "account": "UNITE", "friends": "-", "date": "2021-12-28", "cancel": "", "no_material": ""}, {"company": "株式会社アイショウ", "account": "SHU", "friends": "-", "date": "", "cancel": "", "no_material": ""}, {"company": "NoLimit株式会社", "account": "9High【仙台店】", "friends": "-", "date": "2021-11-25", "cancel": "", "no_material": "✕"}, {"company": "一般社団法人PrimeSeed", "account": "LIF AZABUJUBAN→LIF SKIN CLINIC", "friends": "-", "date": "2021-04-01", "cancel": "", "no_material": ""}, {"company": "株式会社REVIA", "account": "REVIA", "friends": "-", "date": "2021-04-01", "cancel": "", "no_material": ""}, {"company": "東京eスポーツゲート株式会社", "account": "RED° TOKYO TOWER", "friends": "-", "date": "2022-06-01", "cancel": "", "no_material": ""}], "sites": [{"name": "株式会社AI BOT", "url": "https://ai-bot.co.jp", "admin_url": "https://ai-bot.co.jp/ibuki-Admin", "user": "aibot.libot.create@gmail.com", "password": "3O8EZlE$baZBt(Xa4oVHNX8X", "user2": "", "password2": ""}, {"name": "LINEXT", "url": "https://linext-media.com/", "admin_url": "https://linext-media.com/wp-login.php", "user": "aibot.libot.create@gmail.com", "password": "k^j2^ZDmx3H&JENbVo9jRCj6", "user2": "", "password2": ""}, {"name": "casinotown", "url": "https://casinotown.info/", "admin_url": "https://casinotown.info/styt-admin/", "user": "yukitatemukai@gmail.com", "password": "x57BotMUMgd6e635ywLJOXbh0j5EOwsGpTlpfUkP0Kz8bJrMqO", "user2": "", "password2": ""}, {"name": "カリフォルニアエステート", "url": "https://california-estate.jp/", "admin_url": "https://california-estate.jp/wp-admin/", "user": "peekaboo.develop@gmail.com", "password": "YRnVPcDw3", "user2": "", "password2": ""}, {"name": "HUG HP", "url": "https://huginc.jp/", "admin_url": "https://huginc.jp/hug-admin/", "user": "peekaboo.develop@gmail.com", "password": "vtaJPCLT3DFcJ9b9kVVTr(fs", "user2": "", "password2": ""}, {"name": "HUG メディア", "url": "https://huginc.jp/tire-trip/", "admin_url": "https://huginc.jp/tire-trip/wp-login.php", "user": "tire-trip", "password": "hF5FRInEedRFZ6xi", "user2": "", "password2": ""}, {"name": "HUG ", "url": "https://huginc.jp/media/", "admin_url": "https://huginc.jp/media/wp-admin/", "user": "aibot.libot.create+huginc@gmail.com", "password": "P1elbjrd", "user2": "", "password2": ""}, {"name": "AIBOT-TEST", "url": "http://aibot-test.com/", "admin_url": "http://aibot-test.com/wp-admin/", "user": "peekaboo.develop@gmail.com", "password": "Y2WSwp8o", "user2": "", "password2": ""}, {"name": "長原環七通り接骨院", "url": "https://nagahara-kannadori.com/", "admin_url": "https://nagahara-kannadori.com/kamimachi-seikotsu/", "user": "peekaboo.develop@gmail.com", "password": "EtJZQO6f", "user2": "", "password2": ""}, {"name": "PureBeauty", "url": "http://purebeauty-life.com/", "admin_url": "http://purebeauty-life.com/wp-admin/", "user": "yukitatemukai@gmail.com", "password": "s3#6LMbx5nVCKBp", "user2": "", "password2": ""}, {"name": "手取り18万からの貯金術", "url": "http://savemoney18.com/", "admin_url": "http://savemoney18.com/wp-admin/", "user": "yukitatemukai@gmail.com", "password": ".Ve4eX5J6+TSJ/g", "user2": "", "password2": ""}, {"name": "A-RISE", "url": "https://a-rise.ltd/", "admin_url": "https://a-rise.ltd/wp-admin/", "user": "yukitatemukai@gmail.com", "password": "2tk&FgbL*wqaD4Z9", "user2": "", "password2": ""}, {"name": "A-RISE インターフォンメディア", "url": "https://a-rise.ltd/intercom/", "admin_url": "https://a-rise.ltd/intercom/wp-admin/", "user": "intercom-arise", "password": "svJP2CH0aadQ3CTo", "user2": "", "password2": ""}, {"name": "SSW LP", "url": "http://line-hikaku.com/", "admin_url": "http://line-hikaku.com/wp-admin/", "user": "aibot-linehikaku", "password": "BY3Gi96D", "user2": "", "password2": ""}, {"name": "株式会社Retaition", "url": "https://retaition.jp/", "admin_url": "", "user": "Retaition", "password": "abN9rNXh", "user2": "", "password2": ""}, {"name": "AI BOT LINEブログ", "url": "https://ai-bot.co.jp/line-media", "admin_url": "https://ai-bot.co.jp/line-media/admin/", "user": "yukitatemukai@gmail.com", "password": "x57BotMUMgd6e635ywLJOXbh0j5EOwsGpTlpfUkP0Kz8bJrMqO", "user2": "", "password2": ""}, {"name": "グローバルエステート", "url": "https://grobal-estate.jp/", "admin_url": "https://grobal-estate.jp/wp-login.php", "user": "peekaboo.develop@gmail.com", "password": "YRnVPcDw3", "user2": "", "password2": ""}, {"name": "ITreview", "url": "https://client.itreview.jp/client/libot", "admin_url": "s.tokano@ai-bt.co.jp", "user": "https://client.itreview.jp/client/libot", "password": "", "user2": "", "password2": ""}], "servers": [{"xserver_id": "phi89676", "password": "b99PmU5oUur7ftTc", "domain": "AIBOT関連ドメイン"}, {"xserver_id": "chrw387256", "password": "b99PmU5oUur7ftTc", "domain": "kamimachi-seikotsu.net"}, {"xserver_id": "chrw387256", "password": "1BgZzxX3QGGYgwex", "domain": "接骨院"}, {"xserver_id": "chrh476843", "password": "a-rise5138", "domain": "https://a-rise.ltd/"}, {"xserver_id": "phry456262", "password": "kana0119", "domain": "HUG関連"}]};
-let sitesData = [...RAW_DATA.sites];
-const BOT_PER_PAGE = 30;
-let botCurrentPage = 0;
+// ===== DATA =====
+const botData = [
+  { status:'稼働中', client:'美容室〇〇', industry:'美容', plan:'ALL-IN', lineName:'美容室〇〇 公式LINE', staff:'田中', start:'2024-04', url:'#' },
+  { status:'稼働中', client:'飲食店△△', industry:'飲食', plan:'CUSTOM', lineName:'△△ 予約・クーポン', staff:'鈴木', start:'2024-06', url:'#' },
+  { status:'稼働中', client:'シライシエステート', industry:'不動産', plan:'STARTUP', lineName:'シライシ不動産 LINE', staff:'佐藤', start:'2023-11', url:'#' },
+  { status:'一時停止', client:'クリニック〇〇', industry:'医療', plan:'CUSTOM', lineName:'〇〇クリニック 公式', staff:'高橋', start:'2024-01', url:'#' },
+  { status:'稼働中', client:'整体院△△', industry:'医療', plan:'ALL-IN', lineName:'△△整体院 予約LINE', staff:'田中', start:'2024-08', url:'#' },
+  { status:'停止', client:'不動産〇〇', industry:'不動産', plan:'STARTUP', lineName:'〇〇不動産 公式', staff:'鈴木', start:'2023-07', url:'#' },
+];
 
-function esc(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+const loginData = [
+  { type:'サイト', name:'株式会社〇〇 コーポレートサイト', url:'example.com/wp-admin', id:'admin', pass:'password123' },
+  { type:'サーバー', name:'WADAXサーバー (〇〇社)', url:'ftp.wadax.ne.jp', id:'user001', pass:'server!pass' },
+  { type:'広告', name:'Google Ads MCC', url:'ads.google.com', id:'aibot@gmail.com', pass:'ads_pass456' },
+  { type:'SNS', name:'Instagram (クライアントA)', url:'instagram.com', id:'@client_account', pass:'insta789!' },
+  { type:'ツール', name:'Canva Pro', url:'canva.com', id:'marke@aibot.jp', pass:'canva_pass' },
+  { type:'サイト', name:'シライシエステート WP', url:'shiraishi-estate.jp/wp-admin', id:'shiraishi_admin', pass:'estate2024!' },
+];
 
-function getFilteredBots(){
-  const q=(document.getElementById('bot-search')?.value||'').toLowerCase();
-  const cf=document.getElementById('bot-filter-cancel')?.value||'';
-  const sort=document.getElementById('bot-sort')?.value||'date-desc';
-  let data=RAW_DATA.bots.filter(b=>{
-    const m=!q||b.company.toLowerCase().includes(q)||b.account.toLowerCase().includes(q);
-    const c=cf===''||(cf==='cancel'&&b.cancel)||(cf==='normal'&&!b.cancel);
-    return m&&c;
-  });
-  data.sort((a,b)=>{
-    if(sort==='date-desc') return(b.date||'0').localeCompare(a.date||'0');
-    if(sort==='date-asc') return(a.date||'0').localeCompare(b.date||'0');
-    if(sort==='company') return a.company.localeCompare(b.company);
-    if(sort==='friends'){const fa=parseInt(a.friends)||0,fb=parseInt(b.friends)||0;return fb-fa;}
-    return 0;
-  });
-  return data;
+const requests = [
+  { id:1, team:'営業推進', author:'山田', title:'一斉配信の文字数上限を増やしてほしい', tag:'機能追加', body:'複数社から「メッセージが途切れる」との声。不動産・医療系で長文が多い。', client:'不動産△△様、クリニック〇〇様', status:'確認中', comments:[{from:'Deve 佐々木', text:'現状の上限1000文字を確認。要件整理します。'}] },
+  { id:2, team:'運用支援', author:'鈴木', title:'リッチメニューの切り替えが管理画面からできない', tag:'改善', body:'オンボーディング時にクライアントが迷う。UIで直接切り替えられると助かる声多数。', client:'美容サロン〇〇様', status:'対応中', comments:[{from:'Deve 田中', text:'v2.3で対応予定。来月リリース見込み。'}] },
+  { id:3, team:'営業推進', author:'佐藤', title:'友達紹介の紹介経路が分析画面で見づらい', tag:'改善', body:'「どのルートから来たか」を一目で把握したいとの要望。競合比較でも弱点になっている。', client:'飲食店〇〇様', status:'新規', comments:[] },
+  { id:4, team:'運用支援', author:'高橋', title:'予約連携をGoogleカレンダー以外にも対応してほしい', tag:'機能追加', body:'カレンダーアプリ使ってないクライアントがいる。Notionカレンダー連携希望。', client:'整体院△△様', status:'新規', comments:[] },
+];
+
+const industryClass = { '美容':'tag-beauty','飲食':'tag-food','不動産':'tag-real','医療':'tag-clinic' };
+const planClass = { 'STARTUP':'plan-startup','CUSTOM':'plan-custom','ALL-IN':'plan-allin' };
+const typeClass = { 'サイト':'tag-site','サーバー':'tag-server','広告':'tag-ads','SNS':'tag-sns','ツール':'tag-tool' };
+const tagClass = { '機能追加':'tag-feature','バグ':'tag-bug','改善':'tag-improve','質問':'tag-question' };
+const statusClass = { '新規':'status-new','確認中':'status-checking','対応中':'status-wip','完了':'status-done' };
+
+let botQ = '', botS = '', reqFilter = 'all';
+
+// ===== NAVIGATION =====
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  else {
+    document.querySelectorAll('.sidebar-item').forEach(s => {
+      if (s.getAttribute('onclick') && s.getAttribute('onclick').includes("'" + id + "'")) s.classList.add('active');
+    });
+  }
+  if (id === 'deve-requests') renderDeveList();
+  if (id === 'marke-bot') renderBot();
 }
 
-function renderBots(){
-  const data=getFilteredBots();
-  const total=data.length;
-  const maxPage=Math.max(0,Math.ceil(total/BOT_PER_PAGE)-1);
-  if(botCurrentPage>maxPage) botCurrentPage=0;
-  const page=data.slice(botCurrentPage*BOT_PER_PAGE,(botCurrentPage+1)*BOT_PER_PAGE);
-  const tbody=document.getElementById('bot-tbody');
-  if(!tbody) return;
-  tbody.innerHTML=page.map((b,i)=>{
-    const idx=botCurrentPage*BOT_PER_PAGE+i+1;
-    const fr=b.friends==='-'||b.friends==='-'?'<span style="color:var(--text3)">—</span>':`<span style="font-weight:600">${b.friends}</span>`;
-    const st=b.cancel?`<div class="tag tag-yellow" style="flex-direction:column;align-items:flex-start;gap:2px"><span>⚠ 解約予定</span><span style="font-size:10px;opacity:.8">${b.cancel}</span></div>`:'<span class="tag tag-green"><span class="dot dot-green"></span>稼働中</span>';
-    return `<tr><td style="color:var(--text3);font-size:12px">${idx}</td><td><div style="font-weight:500">${b.company}</div>${b.no_material?'<span style="font-size:10px;color:var(--red)">素材なし</span>':""}</td><td style="color:var(--text2)">${b.account||'—'}</td><td>${fr}</td><td style="color:var(--text3);font-size:12px">${b.date||'—'}</td><td>${st}</td></tr>`;
-  }).join('');
-  document.getElementById('bot-count-badge').textContent=`${total}件`;
-  document.getElementById('bot-count-text').textContent=`${total}件中 ${botCurrentPage*BOT_PER_PAGE+1}〜${Math.min((botCurrentPage+1)*BOT_PER_PAGE,total)}件表示`;
-  document.getElementById('bot-page-info').textContent=`${botCurrentPage+1} / ${maxPage+1} ページ`;
-  document.getElementById('bot-prev').disabled=botCurrentPage===0;
-  document.getElementById('bot-next').disabled=botCurrentPage>=maxPage;
+// ===== DATE =====
+function setDate() {
+  const d = new Date();
+  const days = ['日','月','火','水','木','金','土'];
+  document.getElementById('topbar-date').textContent =
+    d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日（' + days[d.getDay()] + '）';
 }
-function botPage(d){botCurrentPage+=d;renderBots();}
+setDate();
 
-function renderSites(){
-  const q=(document.getElementById('site-search')?.value||'').toLowerCase();
-  const data=sitesData.filter(s=>!q||s.name.toLowerCase().includes(q)||s.url.toLowerCase().includes(q));
-  const tbody=document.getElementById('site-tbody');
-  if(!tbody) return;
-  tbody.innerHTML=data.map((s,i)=>`<tr>
-    <td style="color:var(--text3);font-size:12px">${i+1}</td>
-    <td><div style="font-weight:500">${s.name}</div></td>
-    <td><a href="${s.url}" target="_blank" class="ext-link">${s.url.length>40?s.url.substring(0,40)+'…':s.url}</a></td>
-    <td style="font-size:12px;color:var(--text2)">${s.user||'—'}</td>
-    <td><span style="font-family:monospace;letter-spacing:1px;color:var(--text3)">••••••••</span></td>
-    <td><button class="btn btn-ghost btn-sm" onclick="openSiteModal(${i})">🔍 詳細</button></td>
-  </tr>`).join('');
-}
-
-function openSiteModal(idx){
-  const s=sitesData[idx];
-  document.getElementById('modal-site-title').textContent='🔑 '+s.name;
-  let html=`
-    <div class="info-row"><span class="info-label">サイト名</span><span class="info-val">${s.name}</span></div>
-    <div class="info-row"><span class="info-label">URL</span><span class="info-val"><a href="${s.url}" target="_blank" class="ext-link">${s.url}</a></span></div>
-    ${s.admin_url?`<div class="info-row"><span class="info-label">管理者URL</span><span class="info-val"><a href="${s.admin_url}" target="_blank" class="ext-link">${s.admin_url}</a></span></div>`:''}
-    <div class="info-row"><span class="info-label">ユーザー名</span><div class="pw-wrap"><span class="info-val">${s.user||'—'}</span><button class="copy-btn" onclick="copyText('${esc(s.user)}')">コピー</button></div></div>
-    <div class="info-row"><span class="info-label">パスワード</span><div class="pw-wrap"><span class="pw-hide" id="mpw-${idx}">••••••••••</span><button class="toggle-pw" onclick="togglePw('mpw-${idx}','${esc(s.password)}')">表示</button><button class="copy-btn" onclick="copyText('${esc(s.password)}')">コピー</button></div></div>`;
-  if(s.user2){html+=`
-    <div style="margin:12px 0 4px;font-size:11px;color:var(--text3);text-transform:uppercase;border-top:1px solid var(--border);padding-top:12px">2つ目アカウント</div>
-    <div class="info-row"><span class="info-label">ユーザー名2</span><div class="pw-wrap"><span class="info-val">${s.user2}</span><button class="copy-btn" onclick="copyText('${esc(s.user2)}')">コピー</button></div></div>
-    <div class="info-row"><span class="info-label">パスワード2</span><div class="pw-wrap"><span class="pw-hide" id="mpw2-${idx}">••••••••••</span><button class="toggle-pw" onclick="togglePw('mpw2-${idx}','${esc(s.password2)}')">表示</button><button class="copy-btn" onclick="copyText('${esc(s.password2)}')">コピー</button></div></div>`;}
-  document.getElementById('modal-site-body').innerHTML=html;
-  document.getElementById('site-modal').classList.add('show');
-}
-
-function togglePw(id,val){
-  const el=document.getElementById(id);
-  if(!el) return;
-  if(el.classList.contains('pw-hide')){el.classList.remove('pw-hide');el.textContent=val||'（未設定）';el.nextElementSibling.textContent='隠す';}
-  else{el.classList.add('pw-hide');el.textContent='••••••••••';el.nextElementSibling.textContent='表示';}
-}
-
-function copyText(t){
-  const s=t||'';
-  navigator.clipboard.writeText(s).then(()=>showToast('📋 コピーしました')).catch(()=>{
-    const tmp=document.createElement('textarea');tmp.value=s;document.body.appendChild(tmp);tmp.select();document.execCommand('copy');document.body.removeChild(tmp);showToast('📋 コピーしました');
+// ===== BOT TABLE =====
+function renderBot() {
+  const tbody = document.getElementById('bot-tbody');
+  tbody.innerHTML = '';
+  botData.filter(d => {
+    const mQ = !botQ || d.client.includes(botQ) || d.industry.includes(botQ);
+    const mS = !botS || d.status === botS;
+    return mQ && mS;
+  }).forEach(d => {
+    const dotC = d.status === '稼働中' ? 'dot-active' : d.status === '一時停止' ? 'dot-pause' : 'dot-stop';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="status-dot"><span class="dot ${dotC}"></span>${d.status}</span></td>
+      <td style="font-weight:600;">${d.client}</td>
+      <td><span class="tag ${industryClass[d.industry]||'tag-other'}">${d.industry}</span></td>
+      <td><span class="${planClass[d.plan]}">${d.plan}</span></td>
+      <td style="font-size:12px;color:var(--text-secondary);">${d.lineName}</td>
+      <td style="font-size:12px;">${d.staff}</td>
+      <td style="font-size:12px;color:var(--text-secondary);">${d.start}</td>
+      <td><a href="${d.url}">管理画面 →</a></td>
+    `;
+    tbody.appendChild(tr);
   });
 }
+function filterBot(q) { botQ = q; renderBot(); }
+function filterBotStatus(v) { botS = v; renderBot(); }
+renderBot();
 
-function openAddSiteModal(){document.getElementById('add-site-modal').classList.add('show');}
-
-function addSite(){
-  const name=document.getElementById('add-name').value.trim();
-  const url=document.getElementById('add-url').value.trim();
-  if(!name||!url){showToast('⚠ サイト名とURLは必須です','#f59e0b');return;}
-  sitesData.push({name,url,admin_url:document.getElementById('add-admin-url').value.trim(),user:document.getElementById('add-user').value.trim(),password:document.getElementById('add-pw').value.trim(),user2:document.getElementById('add-user2').value.trim(),password2:document.getElementById('add-pw2').value.trim()});
-  ['add-name','add-url','add-admin-url','add-user','add-pw','add-user2','add-pw2'].forEach(id=>{document.getElementById(id).value='';}); 
-  closeModal('add-site-modal');renderSites();
-  document.getElementById('stat-sites').textContent=sitesData.length;
-  showToast('✅ サイトを追加しました');
+// ===== LOGIN MODAL =====
+function renderLoginList(q) {
+  const list = document.getElementById('login-list');
+  list.innerHTML = '';
+  loginData.filter(d => !q || d.name.toLowerCase().includes(q.toLowerCase())).forEach((d, i) => {
+    const div = document.createElement('div');
+    div.className = 'login-item';
+    div.innerHTML = `
+      <div class="login-top">
+        <div class="login-name">${d.name}</div>
+        <span class="tag ${typeClass[d.type]}">${d.type}</span>
+      </div>
+      <div class="login-fields">
+        <span class="login-label">URL</span>
+        <span class="login-val" style="font-size:12px;color:var(--text-secondary);font-family:monospace;">${d.url}</span>
+        <span class="login-label">ID</span>
+        <span class="login-val">${d.id} <button class="copy-btn" onclick="copyText('${d.id}',this)">コピー</button></span>
+        <span class="login-label">PW</span>
+        <span class="login-val"><span class="pass-mask" id="lp-${i}">••••••••</span><button class="reveal-btn" onclick="togglePass('lp-${i}','${d.pass}',this)">表示</button></span>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+function openLoginModal() { renderLoginList(''); document.getElementById('login-modal').classList.add('open'); }
+function closeLoginModal() { document.getElementById('login-modal').classList.remove('open'); }
+function filterLogin(q) { renderLoginList(q); }
+function togglePass(id, pass, btn) {
+  const el = document.getElementById(id);
+  if (el.textContent === '••••••••') { el.textContent = pass; btn.textContent = '隠す'; }
+  else { el.textContent = '••••••••'; btn.textContent = '表示'; }
+}
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).catch(()=>{});
+  const orig = btn.textContent;
+  btn.textContent = '✓ 済'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
 }
 
-function renderServers(){
-  const tbody=document.getElementById('server-tbody');
-  if(!tbody) return;
-  tbody.innerHTML=RAW_DATA.servers.map((s,i)=>`<tr>
-    <td style="color:var(--text3);font-size:12px">${i+1}</td>
-    <td style="font-family:monospace;font-weight:600">${s.xserver_id}</td>
-    <td><div class="pw-wrap"><span class="pw-hide" id="spw-${i}">••••••••••</span><button class="toggle-pw" onclick="togglePw('spw-${i}','${esc(s.password)}')">表示</button><button class="copy-btn" onclick="copyText('${esc(s.password)}')">コピー</button></div></td>
-    <td style="color:var(--text2)">${s.domain}</td>
-    <td><button class="copy-btn" onclick="copyText('${s.xserver_id}')">IDコピー</button></td>
-  </tr>`).join('');
+// ===== REQUEST BOARD =====
+function updateNewCount() {
+  const n = requests.filter(r => r.status === '新規').length;
+  document.getElementById('deve-new-count').textContent = n;
+  document.getElementById('sidebar-new-count').textContent = n;
+}
+function renderDeveList() {
+  updateNewCount();
+  const list = document.getElementById('deve-request-list');
+  const filtered = reqFilter === 'all' ? requests : requests.filter(r => r.status === reqFilter);
+  list.innerHTML = '';
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;font-size:13px;color:var(--text-tertiary);">該当する要望はありません</div>';
+    return;
+  }
+  filtered.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'request-card';
+    const commHtml = r.comments.map(c => `<div class="comment-item"><span class="comment-from">${c.from}：</span>${c.text}</div>`).join('');
+    div.innerHTML = `
+      <div class="req-top">
+        <div class="req-title">${r.title}</div>
+        <span class="req-status ${statusClass[r.status]}">${r.status}</span>
+      </div>
+      <div class="req-meta">
+        <span class="req-from">📤 ${r.team} / ${r.author}</span>
+        <span class="req-tag ${tagClass[r.tag]}">${r.tag}</span>
+      </div>
+      <div class="req-body">${r.body}</div>
+      ${r.client ? `<div class="req-client">🏢 ${r.client}</div>` : ''}
+      <div class="status-change">ステータス変更：
+        <select onchange="changeStatus(${r.id},this.value)">
+          ${['新規','確認中','対応中','完了'].map(s=>`<option value="${s}"${s===r.status?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="req-comment-toggle" onclick="toggleComments(this)">💬 コメント ${r.comments.length}件 ▾</div>
+      <div class="req-comments" id="comm-${r.id}">
+        ${commHtml}
+        <div class="dev-reply">
+          <input type="text" placeholder="Deveからコメントを追加..." id="reply-${r.id}">
+          <button onclick="addComment(${r.id})">送信</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+function toggleComments(el) {
+  const c = el.nextElementSibling;
+  const open = c.style.display === 'block';
+  c.style.display = open ? 'none' : 'block';
+  el.textContent = el.textContent.replace(open ? '▴':'▾', open ? '▾':'▴');
+}
+function changeStatus(id, val) {
+  const r = requests.find(x => x.id === id);
+  if (r) { r.status = val; renderDeveList(); }
+}
+function addComment(id) {
+  const inp = document.getElementById('reply-' + id);
+  if (!inp.value.trim()) return;
+  const r = requests.find(x => x.id === id);
+  if (r) { r.comments.push({ from:'Deve', text: inp.value.trim() }); renderDeveList(); }
+}
+function filterRequests(val, el) {
+  reqFilter = val;
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderDeveList();
 }
 
-function showPage(name,el){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  if(el) el.classList.add('active');
-  if(name==='bot') renderBots();
-  if(name==='sites') renderSites();
-  if(name==='servers') renderServers();
+// ===== REQUEST MODAL =====
+function openRequestModal(team) {
+  document.getElementById('form-team').value = team;
+  ['form-author','form-title','form-body','form-client'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('request-modal').classList.add('open');
 }
-function closeModal(id){document.getElementById(id).classList.remove('show');}
-function openLink(url){window.open(url,'_blank');}
-function showToast(msg,color='#22c55e'){
-  const t=document.getElementById('toast');t.textContent=msg;t.style.background=color;
-  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
+function closeRequestModal() { document.getElementById('request-modal').classList.remove('open'); }
+function submitRequest() {
+  const title = document.getElementById('form-title').value.trim();
+  const body = document.getElementById('form-body').value.trim();
+  if (!title || !body) { alert('タイトルと詳細は必須です'); return; }
+  requests.unshift({
+    id: requests.length + 1,
+    team: document.getElementById('form-team').value,
+    author: document.getElementById('form-author').value.trim() || '匿名',
+    title, tag: document.getElementById('form-tag').value, body,
+    client: document.getElementById('form-client').value.trim(),
+    status: '新規', comments: []
+  });
+  closeRequestModal();
+  updateNewCount();
+  alert('要望を送信しました！');
 }
 
-document.querySelectorAll('.modal-overlay').forEach(el=>{
-  el.addEventListener('click',e=>{if(e.target===el) el.classList.remove('show');});
-});
+function openLink(url) { window.open(url, '_blank'); }
 
-function init(){
-  document.getElementById('today-date').textContent=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
-  const cancelBots=RAW_DATA.bots.filter(b=>b.cancel);
-  document.getElementById('stat-active').textContent=RAW_DATA.bots.length;
-  document.getElementById('stat-cancel').textContent=cancelBots.length;
-  document.getElementById('stat-sites').textContent=sitesData.length;
-  document.getElementById('stat-servers').textContent=RAW_DATA.servers.length;
-  const homeList=document.getElementById('cancel-list-home');
-  if(cancelBots.length===0){homeList.innerHTML='<div class="no-data">解約予定のBOTはありません</div>';}
-  else{homeList.innerHTML=`<table class="tbl"><thead><tr><th>会社名</th><th>アカウント名</th><th>解約情報</th></tr></thead><tbody>${cancelBots.map(b=>`<tr><td>${b.company}</td><td style="color:var(--text2)">${b.account||'—'}</td><td><span class="tag tag-yellow">⚠ ${b.cancel}</span></td></tr>`).join('')}</tbody></table>`;}
-}
-init();
+updateNewCount();
 </script>
 </body>
 </html>
