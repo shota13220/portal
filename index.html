@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIBOT 社内ポータル</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f3;
+      --bg-tertiary: #eeede9;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --text-tertiary: #9b9b9b;
+      --border-light: rgba(0,0,0,0.08);
+      --border-mid: rgba(0,0,0,0.15);
+      --border-strong: rgba(0,0,0,0.25);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ===== TOPBAR ===== */
+    .topbar {
+      background: #1a1a2e;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-logo {
+      width: 28px; height: 28px; background: #fff; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.5px;
+    }
+    .topbar-title { color: #fff; font-size: 15px; font-weight: 500; }
+    .topbar-date { color: rgba(255,255,255,0.45); font-size: 12px; }
+
+    /* ===== LAYOUT ===== */
+    .layout { display: flex; min-height: calc(100vh - 52px); }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 200px; flex-shrink: 0;
+      background: var(--bg-primary);
+      border-right: 0.5px solid var(--border-light);
+      padding: 20px 12px;
+      position: sticky;
+      top: 52px;
+      height: calc(100vh - 52px);
+      overflow-y: auto;
+    }
+    .sidebar-section { margin-bottom: 20px; }
+    .sidebar-label {
+      font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0 8px; margin-bottom: 4px;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 8px; border-radius: var(--radius-md);
+      cursor: pointer; font-size: 13px; color: var(--text-secondary);
+      transition: all 0.12s;
+    }
+    .sidebar-item:hover { background: var(--bg-secondary); color: var(--text-primary); }
+    .sidebar-item.active { background: #1a1a2e; color: #fff; }
+    .sidebar-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+    .sidebar-badge {
+      margin-left: auto; background: #E24B4A; color: #fff;
+      font-size: 10px; font-weight: 600; padding: 1px 6px;
+      border-radius: 10px; min-width: 18px; text-align: center;
+    }
+
+    /* ===== MAIN ===== */
+    .main { flex: 1; padding: 24px; overflow-x: hidden; }
+
+    /* ===== PAGE ===== */
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .page-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+
+    /* ===== TEAM SECTION ===== */
+    .team-block { margin-bottom: 20px; }
+    .team-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .team-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.03em; }
+    .badge-sales { background: #E6F1FB; color: #185FA5; }
+    .badge-ops { background: #E1F5EE; color: #0F6E56; }
+    .badge-deve { background: #EEEDFE; color: #534AB7; }
+    .badge-soumu { background: #FAEEDA; color: #854F0B; }
+    .team-desc { font-size: 12px; color: var(--text-tertiary); }
+
+    /* ===== GRID ===== */
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+
+    /* ===== CARD ===== */
+    .card {
+      background: var(--bg-primary); border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-lg); padding: 14px 16px;
+      cursor: pointer; transition: all 0.15s; position: relative;
+    }
+    .card:hover { border-color: var(--border-mid); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+    .card:active { transform: translateY(0); }
+    .card-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px; font-size: 15px;
+    }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+    .card-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+    .card-arrow { position: absolute; top: 12px; right: 12px; font-size: 11px; color: var(--text-tertiary); }
+
+    .c-blue .card-icon { background: #E6F1FB; color: #185FA5; }
+    .c-teal .card-icon { background: #E1F5EE; color: #0F6E56; }
+    .c-purple .card-icon { background: #EEEDFE; color: #534AB7; }
+    .c-amber .card-icon { background: #FAEEDA; color: #854F0B; }
+    .c-coral .card-icon { background: #FAECE7; color: #993C1D; }
+    .c-pink .card-icon { background: #FBEAF0; color: #993556; }
+
+    /* ===== DIVIDER ===== */
+    .divider { border: none; border-top: 0.5px solid var(--border-light); margin: 20px 0; }
+
+    /* ===== SECTION LABEL ===== */
+    .section-label {
+      font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    /* ===== PANEL ===== */
+    .panel {
+      background: var(--bg-primary); border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px;
+    }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-bottom: 0.5px solid var(--border-light);
+      background: var(--bg-secondary);
+    }
+    .panel-title { font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+    .panel-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      font-size: 12px; padding: 6px 14px; border-radius: 20px;
+      border: 0.5px solid var(--border-mid); cursor: pointer;
+      background: var(--bg-primary); color: var(--text-secondary);
+      transition: all 0.12s; font-family: inherit;
+    }
+    .btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+    .btn-primary {
+      background: #1a1a2e; color: #fff; border-color: #1a1a2e;
+    }
+    .btn-primary:hover { background: #2a2a4e; }
+    .btn-login {
+      background: #E6F1FB; color: #185FA5; border-color: #B5D4F4;
+      font-weight: 600;
+    }
+    .btn-login:hover { background: #B5D4F4; }
+    .btn-new {
+      background: #1a1a2e; color: #fff; border-color: #1a1a2e;
+    }
+    .btn-new:hover { opacity: 0.85; }
+
+    /* ===== SEARCH ROW ===== */
+    .search-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px; border-bottom: 0.5px solid var(--border-light);
+    }
+    .search-input {
+      flex: 1; font-size: 13px; padding: 6px 10px;
+      border-radius: 6px; border: 0.5px solid var(--border-mid);
+      background: var(--bg-primary); color: var(--text-primary); outline: none;
+      font-family: inherit;
+    }
+    .search-input:focus { border-color: #378ADD; }
+    .filter-select {
+      font-size: 12px; padding: 6px 8px; border-radius: 6px;
+      border: 0.5px solid var(--border-mid); background: var(--bg-primary);
+      color: var(--text-secondary); outline: none; font-family: inherit; cursor: pointer;
+    }
+
+    /* ===== TABLE ===== */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th {
+      padding: 8px 14px; text-align: left; font-size: 11px; font-weight: 600;
+      color: var(--text-tertiary); letter-spacing: 0.06em;
+      border-bottom: 0.5px solid var(--border-light);
+      background: var(--bg-secondary); white-space: nowrap;
+    }
+    .data-table td {
+      padding: 10px 14px; border-bottom: 0.5px solid var(--border-light);
+      color: var(--text-primary); vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--bg-secondary); }
+    .table-wrap { overflow-x: auto; }
+
+    /* ===== TAGS ===== */
+    .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+    .tag-beauty { background: #FBEAF0; color: #993556; }
+    .tag-food { background: #FAEEDA; color: #854F0B; }
+    .tag-real { background: #E6F1FB; color: #185FA5; }
+    .tag-clinic { background: #E1F5EE; color: #0F6E56; }
+    .tag-other { background: #F1EFE8; color: #5F5E5A; }
+    .plan-startup { background: #F1EFE8; color: #5F5E5A; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; display: inline-block; }
+    .plan-custom { background: #E6F1FB; color: #185FA5; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; display: inline-block; }
+    .plan-allin { background: #EEEDFE; color: #534AB7; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; display: inline-block; }
+    .tag-site { background: #E6F1FB; color: #185FA5; }
+    .tag-server { background: #FAEEDA; color: #854F0B; }
+    .tag-ads { background: #EEEDFE; color: #534AB7; }
+    .tag-sns { background: #FBEAF0; color: #993556; }
+    .tag-tool { background: #E1F5EE; color: #0F6E56; }
+
+    /* ===== STATUS DOT ===== */
+    .status-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-active { background: #1D9E75; }
+    .dot-pause { background: #BA7517; }
+    .dot-stop { background: #E24B4A; }
+
+    /* ===== REQUEST BOARD ===== */
+    .filter-tabs { display: flex; gap: 6px; padding: 10px 16px; border-bottom: 0.5px solid var(--border-light); flex-wrap: wrap; }
+    .ftab {
+      font-size: 12px; padding: 4px 10px; border-radius: 20px;
+      border: 0.5px solid var(--border-light); cursor: pointer;
+      color: var(--text-secondary); background: var(--bg-primary); font-family: inherit;
+    }
+    .ftab.active { background: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-mid); }
+    .request-list { padding: 10px 16px; display: flex; flex-direction: column; gap: 10px; max-height: 480px; overflow-y: auto; }
+    .request-card { border: 0.5px solid var(--border-light); border-radius: var(--radius-md); padding: 12px 14px; }
+    .request-card:hover { border-color: var(--border-mid); background: var(--bg-secondary); }
+    .req-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .req-title { font-size: 14px; font-weight: 600; color: var(--text-primary); flex: 1; }
+    .req-status { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+    .status-new { background: #FCEBEB; color: #A32D2D; }
+    .status-checking { background: #FAEEDA; color: #854F0B; }
+    .status-wip { background: #E6F1FB; color: #185FA5; }
+    .status-done { background: #E1F5EE; color: #0F6E56; }
+    .req-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+    .req-from { font-size: 11px; color: var(--text-tertiary); }
+    .req-tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+    .tag-feature { background: #EEEDFE; color: #534AB7; }
+    .tag-bug { background: #FCEBEB; color: #A32D2D; }
+    .tag-improve { background: #FAEEDA; color: #854F0B; }
+    .tag-question { background: #E1F5EE; color: #0F6E56; }
+    .req-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .req-client { font-size: 12px; color: var(--text-tertiary); margin-top: 6px; }
+    .req-comment-toggle { font-size: 12px; color: var(--text-secondary); margin-top: 8px; cursor: pointer; display: inline-block; user-select: none; }
+    .req-comment-toggle:hover { color: var(--text-primary); }
+    .req-comments { margin-top: 8px; border-top: 0.5px solid var(--border-light); padding-top: 8px; display: none; }
+    .comment-item { font-size: 12px; color: var(--text-secondary); padding: 6px 0; border-bottom: 0.5px solid var(--border-light); }
+    .comment-item:last-child { border-bottom: none; }
+    .comment-from { font-weight: 600; color: var(--text-primary); }
+    .dev-reply { display: flex; gap: 8px; margin-top: 8px; }
+    .dev-reply input {
+      flex: 1; font-size: 12px; padding: 6px 10px; border-radius: 6px;
+      border: 0.5px solid var(--border-mid); background: var(--bg-primary);
+      color: var(--text-primary); outline: none; font-family: inherit;
+    }
+    .dev-reply button {
+      font-size: 12px; padding: 6px 12px; border-radius: 6px;
+      border: 0.5px solid var(--border-mid); background: var(--bg-secondary);
+      color: var(--text-primary); cursor: pointer; font-family: inherit;
+    }
+    .status-change { font-size: 11px; margin-top: 8px; color: var(--text-tertiary); }
+    .status-change select {
+      font-size: 11px; padding: 3px 6px; border-radius: 4px;
+      border: 0.5px solid var(--border-mid); background: var(--bg-primary);
+      color: var(--text-secondary); outline: none; cursor: pointer; font-family: inherit; margin-left: 4px;
+    }
+    .deve-count { font-size: 12px; color: var(--text-tertiary); }
+    .deve-count span { font-weight: 600; color: #A32D2D; }
+
+    /* ===== LOGIN ITEMS ===== */
+    .login-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .login-item { border: 0.5px solid var(--border-light); border-radius: var(--radius-md); padding: 12px 14px; }
+    .login-item:hover { border-color: var(--border-mid); }
+    .login-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .login-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .login-fields { display: grid; grid-template-columns: 52px 1fr; gap: 4px 12px; font-size: 12px; }
+    .login-label { color: var(--text-tertiary); display: flex; align-items: center; }
+    .login-val { font-family: monospace; color: var(--text-primary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .pass-mask { color: var(--text-tertiary); letter-spacing: 2px; }
+    .reveal-btn, .copy-btn {
+      font-size: 10px; padding: 2px 7px; border-radius: 4px;
+      border: 0.5px solid var(--border-light); background: transparent;
+      color: var(--text-secondary); cursor: pointer; font-family: inherit;
+    }
+    .reveal-btn:hover, .copy-btn:hover { background: var(--bg-secondary); }
+    .copy-btn.copied { color: #0F6E56; border-color: #0F6E56; }
+
+    /* ===== QUICK LINKS ===== */
+    .quick-links { background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 14px 16px; margin-top: 20px; }
+    .quick-title { font-size: 11px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+    .link-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .link-chip {
+      padding: 5px 14px; background: var(--bg-primary); border: 0.5px solid var(--border-light);
+      border-radius: 20px; font-size: 12px; color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+    }
+    .link-chip:hover { border-color: var(--border-mid); color: var(--text-primary); }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg-primary); border-radius: var(--radius-xl);
+      border: 0.5px solid var(--border-light); padding: 24px;
+      width: min(520px, 92vw); max-height: 88vh; overflow-y: auto;
+      box-shadow: var(--shadow-md);
+    }
+    .modal-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+    .modal-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .modal-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-tertiary); line-height: 1; padding: 0; }
+    .modal-close:hover { color: var(--text-primary); }
+    .form-row { margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; display: block; font-weight: 500; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; font-size: 13px; padding: 8px 10px;
+      border-radius: 6px; border: 0.5px solid var(--border-mid);
+      background: var(--bg-primary); color: var(--text-primary); outline: none; font-family: inherit;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #378ADD; }
+    .form-textarea { resize: vertical; min-height: 90px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+    .modal-search {
+      width: 100%; font-size: 13px; padding: 8px 10px;
+      border-radius: 6px; border: 0.5px solid var(--border-mid);
+      background: var(--bg-primary); color: var(--text-primary);
+      outline: none; margin-bottom: 12px; font-family: inherit;
+    }
+    .modal-search:focus { border-color: #378ADD; }
+
+    a { color: #185FA5; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .main { padding: 16px; }
+    }
+    @media (max-width: 480px) {
+      .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">AI</div>
+    <div class="topbar-title">AIBOT 社内ポータル</div>
+  </div>
+  <div class="topbar-date" id="topbar-date"></div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">メニュー</div>
+      <div class="sidebar-item active" onclick="showPage('home', this)">
+        <span class="sidebar-icon">🏠</span> ホーム
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">AI MARKE</div>
+      <div class="sidebar-item" onclick="showPage('marke-sales', this)">
+        <span class="sidebar-icon">📊</span> 営業推進チーム
+      </div>
+      <div class="sidebar-item" onclick="showPage('marke-ops', this)">
+        <span class="sidebar-icon">🗂️</span> 運用支援チーム
+      </div>
+      <div class="sidebar-item" onclick="showPage('marke-bot', this)">
+        <span class="sidebar-icon">🤖</span> BOT管理表
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">AI Deve</div>
+      <div class="sidebar-item" onclick="showPage('deve-main', this)">
+        <span class="sidebar-icon">⚙️</span> 開発ツール
+      </div>
+      <div class="sidebar-item" onclick="showPage('deve-requests', this)">
+        <span class="sidebar-icon">📬</span> LIBOT要望ボード
+        <span class="sidebar-badge" id="sidebar-new-count">0</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">総務</div>
+      <div class="sidebar-item" onclick="showPage('soumu', this)">
+        <span class="sidebar-icon">🏢</span> 総務
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ===== HOME ===== -->
+    <div class="page active" id="page-home">
+      <div class="page-title">おつかれさまです 👋</div>
+      <div class="page-sub">今日もよろしく。よく使うメニューはここから。</div>
+
+      <div class="section-label">AI MARKE</div>
+      <div class="grid-3" style="margin-bottom:16px;">
+        <div class="card c-blue" onclick="showPage('marke-sales', null)">
+          <div class="card-icon">📊</div>
+          <div class="card-title">営業推進チーム</div>
+          <div class="card-desc">顧客リスト・商談録画・五カ年計画</div>
+          <div class="card-arrow">→</div>
+        </div>
+        <div class="card c-teal" onclick="showPage('marke-ops', null)">
+          <div class="card-icon">🗂️</div>
+          <div class="card-title">運用支援チーム</div>
+          <div class="card-desc">クライアント管理・オンボーディング</div>
+          <div class="card-arrow">→</div>
+        </div>
+        <div class="card c-purple" onclick="showPage('marke-bot', null)">
+          <div class="card-icon">🤖</div>
+          <div class="card-title">稼働中のBOT管理表</div>
+          <div class="card-desc">稼働アカウント・プラン・担当者</div>
+          <div class="card-arrow">→</div>
+        </div>
+      </div>
+
+      <div class="section-label">AI Deve</div>
+      <div class="grid-3" style="margin-bottom:16px;">
+        <div class="card c-purple" onclick="showPage('deve-main', null)">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">開発ツール</div>
+          <div class="card-desc">ドキュメント・サーバー・バグ管理</div>
+          <div class="card-arrow">→</div>
+        </div>
+        <div class="card c-coral" onclick="showPage('deve-requests', null)">
+          <div class="card-icon">📬</div>
+          <div class="card-title">LIBOT要望ボード</div>
+          <div class="card-desc">営業・運用からの声を確認・対応</div>
+          <div class="card-arrow">→</div>
+        </div>
+        <div class="card c-amber" onclick="showPage('soumu', null)">
+          <div class="card-icon">🏢</div>
+          <div class="card-title">総務</div>
+          <div class="card-desc">社内規定・休暇申請・組織図</div>
+          <div class="card-arrow">→</div>
+        </div>
+      </div>
+
+      <div class="quick-links">
+        <div class="quick-title">よく使うリンク</div>
+        <div class="link-row">
+          <div class="link-chip" onclick="openLink('https://libot.jp')">LIBOT 管理画面</div>
+          <div class="link-chip" onclick="openLink('https://drive.google.com')">Google Drive</div>
+          <div class="link-chip" onclick="openLink('https://slack.com')">Slack</div>
+          <div class="link-chip" onclick="openLink('https://notion.so')">Notion</div>
+          <div class="link-chip" onclick="openLink('https://freee.co.jp')">Freee</div>
+          <div class="link-chip" onclick="openLink('https://zoom.us')">Zoom</div>
+          <div class="link-chip" onclick="openLink('https://chatwork.com')">ChatWork</div>
+          <div class="link-chip" onclick="openLink('https://github.com')">GitHub</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MARKE 営業推進 ===== -->
+    <div class="page" id="page-marke-sales">
+      <div class="page-title">営業推進チーム</div>
+      <div class="page-sub">新規獲得・商談・パイプライン管理</div>
+      <div class="team-header"><span class="team-badge badge-sales">営業推進チーム</span></div>
+      <div class="grid-3">
+        <div class="card c-blue"><div class="card-icon">👥</div><div class="card-title">顧客リスト</div><div class="card-desc">商談中・見込み顧客の一覧管理</div><div class="card-arrow">→</div></div>
+        <div class="card c-coral"><div class="card-icon">🎬</div><div class="card-title">商談録画</div><div class="card-desc">Zoom録画・商談メモの蓄積</div><div class="card-arrow">→</div></div>
+        <div class="card c-purple"><div class="card-icon">📈</div><div class="card-title">五カ年計画</div><div class="card-desc">KPI・売上目標・事業計画</div><div class="card-arrow">→</div></div>
+        <div class="card c-amber"><div class="card-icon">📁</div><div class="card-title">営業資料</div><div class="card-desc">提案書・トークスクリプト</div><div class="card-arrow">→</div></div>
+        <div class="card c-teal"><div class="card-icon">🤝</div><div class="card-title">代理店管理</div><div class="card-desc">パートナー・代理店一覧</div><div class="card-arrow">→</div></div>
+        <div class="card c-pink" onclick="openRequestModal('営業推進')"><div class="card-icon">💬</div><div class="card-title">LIBOT要望を送る</div><div class="card-desc">商談で出た意見をDeveへ</div><div class="card-arrow">→</div></div>
+      </div>
+    </div>
+
+    <!-- ===== MARKE 運用支援 ===== -->
+    <div class="page" id="page-marke-ops">
+      <div class="page-title">運用支援チーム</div>
+      <div class="page-sub">既存クライアントの継続サポート・定着</div>
+      <div class="team-header"><span class="team-badge badge-ops">運用支援チーム</span></div>
+      <div class="grid-3">
+        <div class="card c-teal"><div class="card-icon">🗂️</div><div class="card-title">クライアント管理</div><div class="card-desc">顧客別施策・進捗・ステータス</div><div class="card-arrow">→</div></div>
+        <div class="card c-blue"><div class="card-icon">🚀</div><div class="card-title">オンボーディング管理</div><div class="card-desc">新規導入フロー・チェックリスト</div><div class="card-arrow">→</div></div>
+        <div class="card c-purple"><div class="card-icon">📄</div><div class="card-title">お客様向け資料集</div><div class="card-desc">説明資料・マニュアル・FAQ</div><div class="card-arrow">→</div></div>
+        <div class="card c-pink" onclick="openRequestModal('運用支援')"><div class="card-icon">💬</div><div class="card-title">LIBOT要望を送る</div><div class="card-desc">クライアントの声をDeveへ</div><div class="card-arrow">→</div></div>
+      </div>
+    </div>
+
+    <!-- ===== BOT管理表 ===== -->
+    <div class="page" id="page-marke-bot">
+      <div class="page-title">稼働中のBOT管理表</div>
+      <div class="page-sub">稼働中・停止中のLINE BOTアカウントを一元管理</div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">🤖 稼働アカウント一覧</div>
+          <div class="panel-actions">
+            <button class="btn btn-login" onclick="openLoginModal()">🔑 ログイン情報</button>
+            <button class="btn">+ 追加</button>
+          </div>
+        </div>
+        <div class="search-row">
+          <input class="search-input" type="text" placeholder="クライアント名・業種で絞り込み..." oninput="filterBot(this.value)">
+          <select class="filter-select" onchange="filterBotStatus(this.value)">
+            <option value="">すべて</option>
+            <option value="稼働中">稼働中</option>
+            <option value="一時停止">一時停止</option>
+            <option value="停止">停止</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ステータス</th>
+                <th>クライアント名</th>
+                <th>業種</th>
+                <th>プラン</th>
+                <th>LINEアカウント名</th>
+                <th>担当者</th>
+                <th>契約開始</th>
+                <th>管理画面</th>
+              </tr>
+            </thead>
+            <tbody id="bot-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== AI Deve メイン ===== -->
+    <div class="page" id="page-deve-main">
+      <div class="page-title">AI Deve</div>
+      <div class="page-sub">開発・システム管理</div>
+      <div class="team-header"><span class="team-badge badge-deve">AI Deve</span></div>
+      <div class="grid-3">
+        <div class="card c-purple"><div class="card-icon">⚙️</div><div class="card-title">開発ドキュメント</div><div class="card-desc">API仕様・設計書</div><div class="card-arrow">→</div></div>
+        <div class="card c-blue"><div class="card-icon">🖥️</div><div class="card-title">サーバー情報</div><div class="card-desc">本番・開発環境のログイン</div><div class="card-arrow">→</div></div>
+        <div class="card c-amber"><div class="card-icon">🐛</div><div class="card-title">バグ・課題管理</div><div class="card-desc">Issue・タスク一覧</div><div class="card-arrow">→</div></div>
+      </div>
+    </div>
+
+    <!-- ===== 要望ボード ===== -->
+    <div class="page" id="page-deve-requests">
+      <div class="page-title">LIBOT 要望ボード</div>
+      <div class="page-sub">営業・運用チームからの声をここで確認・対応</div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📬 受信した要望・フィードバック</div>
+          <div class="deve-count">未対応: <span id="deve-new-count">0</span>件</div>
+        </div>
+        <div class="filter-tabs">
+          <button class="ftab active" onclick="filterRequests('all',this)">すべて</button>
+          <button class="ftab" onclick="filterRequests('新規',this)">🔴 新規</button>
+          <button class="ftab" onclick="filterRequests('確認中',this)">🟡 確認中</button>
+          <button class="ftab" onclick="filterRequests('対応中',this)">🔵 対応中</button>
+          <button class="ftab" onclick="filterRequests('完了',this)">🟢 完了</button>
+        </div>
+        <div class="request-list" id="deve-request-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== 総務 ===== -->
+    <div class="page" id="page-soumu">
+      <div class="page-title">総務</div>
+      <div class="page-sub">社内手続き・規定・組織情報</div>
+      <div class="team-header"><span class="team-badge badge-soumu">総務</span></div>
+      <div class="grid-3">
+        <div class="card c-blue"><div class="card-icon">📋</div><div class="card-title">社内規定</div><div class="card-desc">就業規則・ルール集</div><div class="card-arrow">→</div></div>
+        <div class="card c-teal"><div class="card-icon">🏖️</div><div class="card-title">休暇申請</div><div class="card-desc">有給・申請フォーム</div><div class="card-arrow">→</div></div>
+        <div class="card c-purple"><div class="card-icon">🏢</div><div class="card-title">組織図</div><div class="card-desc">部署・メンバー構成</div><div class="card-arrow">→</div></div>
+        <div class="card c-amber"><div class="card-icon">🚆</div><div class="card-title">交通費精算</div><div class="card-desc">月末締め・申請フォーム</div><div class="card-arrow">→</div></div>
+        <div class="card c-coral"><div class="card-icon">📤</div><div class="card-title">出張申請</div><div class="card-desc">出張ルール・手続き</div><div class="card-arrow">→</div></div>
+        <div class="card c-pink"><div class="card-icon">❓</div><div class="card-title">相談窓口</div><div class="card-desc">困ったことはここへ</div><div class="card-arrow">→</div></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ===== ログイン情報モーダル ===== -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">🔑 サイト・サービス ログイン情報</div>
+        <div class="modal-sub">パスワードは必要な時だけ表示してください</div>
+      </div>
+      <button class="modal-close" onclick="closeLoginModal()">×</button>
+    </div>
+    <input class="modal-search" type="text" placeholder="サービス名で絞り込み..." oninput="filterLogin(this.value)">
+    <div class="login-list" id="login-list"></div>
+  </div>
+</div>
+
+<!-- ===== 要望投稿モーダル ===== -->
+<div class="modal-overlay" id="request-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">💬 LIBOT 要望・フィードバックを送る</div>
+        <div class="modal-sub">具体的に書くとDeveが動きやすいです</div>
+      </div>
+      <button class="modal-close" onclick="closeRequestModal()">×</button>
+    </div>
+    <div class="form-row">
+      <label class="form-label">投稿チーム</label>
+      <input class="form-input" id="form-team" readonly style="background:var(--bg-secondary);color:var(--text-secondary);">
+    </div>
+    <div class="form-row">
+      <label class="form-label">投稿者名</label>
+      <input class="form-input" id="form-author" placeholder="例：田中">
+    </div>
+    <div class="form-row">
+      <label class="form-label">タイトル</label>
+      <input class="form-input" id="form-title" placeholder="例：一斉配信の文字数制限を増やしてほしい">
+    </div>
+    <div class="form-row">
+      <label class="form-label">種別</label>
+      <select class="form-select" id="form-tag">
+        <option value="機能追加">機能追加</option>
+        <option value="改善">改善</option>
+        <option value="バグ">バグ</option>
+        <option value="質問">質問</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">詳細・商談での声</label>
+      <textarea class="form-textarea" id="form-body" placeholder="どんな場面で出た声か、どのクライアントで課題になっているかを具体的に"></textarea>
+    </div>
+    <div class="form-row">
+      <label class="form-label">関連クライアント（任意）</label>
+      <input class="form-input" id="form-client" placeholder="例：美容室〇〇様、不動産△△様">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeRequestModal()">キャンセル</button>
+      <button class="btn btn-new" onclick="submitRequest()">送信する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const botData = [
+  { status:'稼働中', client:'美容室〇〇', industry:'美容', plan:'ALL-IN', lineName:'美容室〇〇 公式LINE', staff:'田中', start:'2024-04', url:'#' },
+  { status:'稼働中', client:'飲食店△△', industry:'飲食', plan:'CUSTOM', lineName:'△△ 予約・クーポン', staff:'鈴木', start:'2024-06', url:'#' },
+  { status:'稼働中', client:'シライシエステート', industry:'不動産', plan:'STARTUP', lineName:'シライシ不動産 LINE', staff:'佐藤', start:'2023-11', url:'#' },
+  { status:'一時停止', client:'クリニック〇〇', industry:'医療', plan:'CUSTOM', lineName:'〇〇クリニック 公式', staff:'高橋', start:'2024-01', url:'#' },
+  { status:'稼働中', client:'整体院△△', industry:'医療', plan:'ALL-IN', lineName:'△△整体院 予約LINE', staff:'田中', start:'2024-08', url:'#' },
+  { status:'停止', client:'不動産〇〇', industry:'不動産', plan:'STARTUP', lineName:'〇〇不動産 公式', staff:'鈴木', start:'2023-07', url:'#' },
+];
+
+const loginData = [
+  { type:'サイト', name:'株式会社〇〇 コーポレートサイト', url:'example.com/wp-admin', id:'admin', pass:'password123' },
+  { type:'サーバー', name:'WADAXサーバー (〇〇社)', url:'ftp.wadax.ne.jp', id:'user001', pass:'server!pass' },
+  { type:'広告', name:'Google Ads MCC', url:'ads.google.com', id:'aibot@gmail.com', pass:'ads_pass456' },
+  { type:'SNS', name:'Instagram (クライアントA)', url:'instagram.com', id:'@client_account', pass:'insta789!' },
+  { type:'ツール', name:'Canva Pro', url:'canva.com', id:'marke@aibot.jp', pass:'canva_pass' },
+  { type:'サイト', name:'シライシエステート WP', url:'shiraishi-estate.jp/wp-admin', id:'shiraishi_admin', pass:'estate2024!' },
+];
+
+const requests = [
+  { id:1, team:'営業推進', author:'山田', title:'一斉配信の文字数上限を増やしてほしい', tag:'機能追加', body:'複数社から「メッセージが途切れる」との声。不動産・医療系で長文が多い。', client:'不動産△△様、クリニック〇〇様', status:'確認中', comments:[{from:'Deve 佐々木', text:'現状の上限1000文字を確認。要件整理します。'}] },
+  { id:2, team:'運用支援', author:'鈴木', title:'リッチメニューの切り替えが管理画面からできない', tag:'改善', body:'オンボーディング時にクライアントが迷う。UIで直接切り替えられると助かる声多数。', client:'美容サロン〇〇様', status:'対応中', comments:[{from:'Deve 田中', text:'v2.3で対応予定。来月リリース見込み。'}] },
+  { id:3, team:'営業推進', author:'佐藤', title:'友達紹介の紹介経路が分析画面で見づらい', tag:'改善', body:'「どのルートから来たか」を一目で把握したいとの要望。競合比較でも弱点になっている。', client:'飲食店〇〇様', status:'新規', comments:[] },
+  { id:4, team:'運用支援', author:'高橋', title:'予約連携をGoogleカレンダー以外にも対応してほしい', tag:'機能追加', body:'カレンダーアプリ使ってないクライアントがいる。Notionカレンダー連携希望。', client:'整体院△△様', status:'新規', comments:[] },
+];
+
+const industryClass = { '美容':'tag-beauty','飲食':'tag-food','不動産':'tag-real','医療':'tag-clinic' };
+const planClass = { 'STARTUP':'plan-startup','CUSTOM':'plan-custom','ALL-IN':'plan-allin' };
+const typeClass = { 'サイト':'tag-site','サーバー':'tag-server','広告':'tag-ads','SNS':'tag-sns','ツール':'tag-tool' };
+const tagClass = { '機能追加':'tag-feature','バグ':'tag-bug','改善':'tag-improve','質問':'tag-question' };
+const statusClass = { '新規':'status-new','確認中':'status-checking','対応中':'status-wip','完了':'status-done' };
+
+let botQ = '', botS = '', reqFilter = 'all';
+
+// ===== NAVIGATION =====
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  else {
+    document.querySelectorAll('.sidebar-item').forEach(s => {
+      if (s.getAttribute('onclick') && s.getAttribute('onclick').includes("'" + id + "'")) s.classList.add('active');
+    });
+  }
+  if (id === 'deve-requests') renderDeveList();
+  if (id === 'marke-bot') renderBot();
+}
+
+// ===== DATE =====
+function setDate() {
+  const d = new Date();
+  const days = ['日','月','火','水','木','金','土'];
+  document.getElementById('topbar-date').textContent =
+    d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日（' + days[d.getDay()] + '）';
+}
+setDate();
+
+// ===== BOT TABLE =====
+function renderBot() {
+  const tbody = document.getElementById('bot-tbody');
+  tbody.innerHTML = '';
+  botData.filter(d => {
+    const mQ = !botQ || d.client.includes(botQ) || d.industry.includes(botQ);
+    const mS = !botS || d.status === botS;
+    return mQ && mS;
+  }).forEach(d => {
+    const dotC = d.status === '稼働中' ? 'dot-active' : d.status === '一時停止' ? 'dot-pause' : 'dot-stop';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="status-dot"><span class="dot ${dotC}"></span>${d.status}</span></td>
+      <td style="font-weight:600;">${d.client}</td>
+      <td><span class="tag ${industryClass[d.industry]||'tag-other'}">${d.industry}</span></td>
+      <td><span class="${planClass[d.plan]}">${d.plan}</span></td>
+      <td style="font-size:12px;color:var(--text-secondary);">${d.lineName}</td>
+      <td style="font-size:12px;">${d.staff}</td>
+      <td style="font-size:12px;color:var(--text-secondary);">${d.start}</td>
+      <td><a href="${d.url}">管理画面 →</a></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+function filterBot(q) { botQ = q; renderBot(); }
+function filterBotStatus(v) { botS = v; renderBot(); }
+renderBot();
+
+// ===== LOGIN MODAL =====
+function renderLoginList(q) {
+  const list = document.getElementById('login-list');
+  list.innerHTML = '';
+  loginData.filter(d => !q || d.name.toLowerCase().includes(q.toLowerCase())).forEach((d, i) => {
+    const div = document.createElement('div');
+    div.className = 'login-item';
+    div.innerHTML = `
+      <div class="login-top">
+        <div class="login-name">${d.name}</div>
+        <span class="tag ${typeClass[d.type]}">${d.type}</span>
+      </div>
+      <div class="login-fields">
+        <span class="login-label">URL</span>
+        <span class="login-val" style="font-size:12px;color:var(--text-secondary);font-family:monospace;">${d.url}</span>
+        <span class="login-label">ID</span>
+        <span class="login-val">${d.id} <button class="copy-btn" onclick="copyText('${d.id}',this)">コピー</button></span>
+        <span class="login-label">PW</span>
+        <span class="login-val"><span class="pass-mask" id="lp-${i}">••••••••</span><button class="reveal-btn" onclick="togglePass('lp-${i}','${d.pass}',this)">表示</button></span>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+function openLoginModal() { renderLoginList(''); document.getElementById('login-modal').classList.add('open'); }
+function closeLoginModal() { document.getElementById('login-modal').classList.remove('open'); }
+function filterLogin(q) { renderLoginList(q); }
+function togglePass(id, pass, btn) {
+  const el = document.getElementById(id);
+  if (el.textContent === '••••••••') { el.textContent = pass; btn.textContent = '隠す'; }
+  else { el.textContent = '••••••••'; btn.textContent = '表示'; }
+}
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).catch(()=>{});
+  const orig = btn.textContent;
+  btn.textContent = '✓ 済'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+}
+
+// ===== REQUEST BOARD =====
+function updateNewCount() {
+  const n = requests.filter(r => r.status === '新規').length;
+  document.getElementById('deve-new-count').textContent = n;
+  document.getElementById('sidebar-new-count').textContent = n;
+}
+function renderDeveList() {
+  updateNewCount();
+  const list = document.getElementById('deve-request-list');
+  const filtered = reqFilter === 'all' ? requests : requests.filter(r => r.status === reqFilter);
+  list.innerHTML = '';
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;font-size:13px;color:var(--text-tertiary);">該当する要望はありません</div>';
+    return;
+  }
+  filtered.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'request-card';
+    const commHtml = r.comments.map(c => `<div class="comment-item"><span class="comment-from">${c.from}：</span>${c.text}</div>`).join('');
+    div.innerHTML = `
+      <div class="req-top">
+        <div class="req-title">${r.title}</div>
+        <span class="req-status ${statusClass[r.status]}">${r.status}</span>
+      </div>
+      <div class="req-meta">
+        <span class="req-from">📤 ${r.team} / ${r.author}</span>
+        <span class="req-tag ${tagClass[r.tag]}">${r.tag}</span>
+      </div>
+      <div class="req-body">${r.body}</div>
+      ${r.client ? `<div class="req-client">🏢 ${r.client}</div>` : ''}
+      <div class="status-change">ステータス変更：
+        <select onchange="changeStatus(${r.id},this.value)">
+          ${['新規','確認中','対応中','完了'].map(s=>`<option value="${s}"${s===r.status?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="req-comment-toggle" onclick="toggleComments(this)">💬 コメント ${r.comments.length}件 ▾</div>
+      <div class="req-comments" id="comm-${r.id}">
+        ${commHtml}
+        <div class="dev-reply">
+          <input type="text" placeholder="Deveからコメントを追加..." id="reply-${r.id}">
+          <button onclick="addComment(${r.id})">送信</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+function toggleComments(el) {
+  const c = el.nextElementSibling;
+  const open = c.style.display === 'block';
+  c.style.display = open ? 'none' : 'block';
+  el.textContent = el.textContent.replace(open ? '▴':'▾', open ? '▾':'▴');
+}
+function changeStatus(id, val) {
+  const r = requests.find(x => x.id === id);
+  if (r) { r.status = val; renderDeveList(); }
+}
+function addComment(id) {
+  const inp = document.getElementById('reply-' + id);
+  if (!inp.value.trim()) return;
+  const r = requests.find(x => x.id === id);
+  if (r) { r.comments.push({ from:'Deve', text: inp.value.trim() }); renderDeveList(); }
+}
+function filterRequests(val, el) {
+  reqFilter = val;
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderDeveList();
+}
+
+// ===== REQUEST MODAL =====
+function openRequestModal(team) {
+  document.getElementById('form-team').value = team;
+  ['form-author','form-title','form-body','form-client'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('request-modal').classList.add('open');
+}
+function closeRequestModal() { document.getElementById('request-modal').classList.remove('open'); }
+function submitRequest() {
+  const title = document.getElementById('form-title').value.trim();
+  const body = document.getElementById('form-body').value.trim();
+  if (!title || !body) { alert('タイトルと詳細は必須です'); return; }
+  requests.unshift({
+    id: requests.length + 1,
+    team: document.getElementById('form-team').value,
+    author: document.getElementById('form-author').value.trim() || '匿名',
+    title, tag: document.getElementById('form-tag').value, body,
+    client: document.getElementById('form-client').value.trim(),
+    status: '新規', comments: []
+  });
+  closeRequestModal();
+  updateNewCount();
+  alert('要望を送信しました！');
+}
+
+function openLink(url) { window.open(url, '_blank'); }
+
+updateNewCount();
+</script>
+</body>
+</html>
