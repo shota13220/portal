@@ -160,8 +160,17 @@
     }
     .summary-chip strong { color: var(--text); }
 
+
+    .materials-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; padding: 18px 20px 20px; }
+    .material-card { border:1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,0.78); padding: 16px; display:flex; flex-direction:column; gap:10px; }
+    .material-title { font-size: 14px; font-weight: 800; }
+    .material-url { font-size: 12px; color: var(--text-faint); word-break: break-all; }
+    .material-meta { display:flex; gap:8px; flex-wrap: wrap; }
+    .row-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .inline-hidden { display:none; }
+
     @media (max-width: 980px) {
-      .hero, .grid-3, .form-grid { grid-template-columns: 1fr; }
+      .hero, .grid-3, .form-grid, .materials-grid { grid-template-columns: 1fr; }
       .topnav { align-items: flex-start; }
       .topnav-right { width: 100%; justify-content: flex-start; }
     }
@@ -260,10 +269,36 @@
         <div class="card"><div class="card-icon">👥</div><div class="card-title">顧客リスト</div><div class="card-desc">商談中・見込み顧客の一覧管理。</div><div class="card-arrow">→</div></div>
         <div class="card"><div class="card-icon">🎬</div><div class="card-title">商談録画</div><div class="card-desc">Zoom録画・商談メモの蓄積。</div><div class="card-arrow">→</div></div>
         <div class="card"><div class="card-icon">📈</div><div class="card-title">五カ年計画</div><div class="card-desc">KPI・売上目標・事業計画。</div><div class="card-arrow">→</div></div>
-        <div class="card"><div class="card-icon">📁</div><div class="card-title">営業資料</div><div class="card-desc">提案書・トークスクリプト整理。</div><div class="card-arrow">→</div></div>
+        <div class="card" onclick="openSalesMaterials()"><div class="card-icon">📁</div><div class="card-title">営業資料</div><div class="card-desc">提案書・トークスクリプト整理。</div><div class="card-arrow">→</div></div>
         <div class="card"><div class="card-icon">🤝</div><div class="card-title">代理店管理</div><div class="card-desc">パートナー・代理店一覧。</div><div class="card-arrow">→</div></div>
         <div class="card" onclick="openRequestModal('営業推進')"><div class="card-icon">💬</div><div class="card-title">LIBOT要望を送る</div><div class="card-desc">商談で出た声をDeveに連携。</div><div class="card-arrow">→</div></div>
       </div>
+
+      <div class="panel" id="sales-materials-panel" style="margin-top:20px;">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">📁 営業資料一覧</div>
+            <div class="panel-sub">検索しながら、必要な資料をすぐ開けるようにまとめています</div>
+          </div>
+          <div class="panel-actions">
+            <div class="pill pill-blue"><span id="material-count">0</span> 件</div>
+          </div>
+        </div>
+        <div class="search-row">
+          <input class="search-input" id="material-search" type="text" placeholder="資料名 / URL / 種別で検索..." oninput="renderSalesMaterials()">
+          <select class="filter-select" id="material-category-filter" onchange="renderSalesMaterials()">
+            <option value="">種別: すべて</option>
+            <option value="営業資料">営業資料</option>
+            <option value="マニュアル">マニュアル</option>
+            <option value="導入資料">導入資料</option>
+            <option value="事例">事例</option>
+            <option value="動画">動画</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+        <div class="materials-grid" id="materials-grid"></div>
+      </div>
+
     </div>
 
     
@@ -324,6 +359,7 @@
                 <th>担当者</th>
                 <th>次回アクション</th>
                 <th>メモ</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody id="client-tbody"></tbody>
@@ -380,12 +416,13 @@
 
   <div class="modal-overlay" id="login-add-modal">
     <div class="modal">
-      <div class="modal-head"><div><div class="modal-title">＋ ログイン情報を追加</div><div class="modal-sub">AIMARKE の運用支援で使うサイト情報を追加できます</div></div><button class="modal-close" onclick="closeLoginAddModal()">×</button></div>
+      <div class="modal-head"><div><div class="modal-title" id="login-modal-title">＋ ログイン情報を追加</div><div class="modal-sub">AIMARKE の運用支援で使うサイト情報を追加できます</div></div><button class="modal-close" onclick="closeLoginAddModal()">×</button></div>
+      <input type="hidden" id="login-edit-id">
       <div class="form-grid"><div class="form-row"><label class="form-label">種別</label><select class="form-select" id="login-form-type"><option value="サイト">サイト</option><option value="メール">メール</option><option value="ツール">ツール</option><option value="その他">その他</option></select></div><div class="form-row"><label class="form-label">サービス名</label><input class="form-input" id="login-form-name" placeholder="例：AI BOT LINEブログ"></div></div>
       <div class="form-row"><label class="form-label">サイトURL</label><input class="form-input" id="login-form-site" placeholder="例：https://ai-bot.co.jp/line-media"></div>
       <div class="form-row"><label class="form-label">ログインURL</label><input class="form-input" id="login-form-login" placeholder="例：https://ai-bot.co.jp/line-media/admin/"></div>
       <div class="form-grid"><div class="form-row"><label class="form-label">ID / メールアドレス</label><input class="form-input" id="login-form-id" placeholder="例：peekaboo.develop@gmail.com"></div><div class="form-row"><label class="form-label">パスワード</label><input class="form-input" id="login-form-pass" placeholder="必要ならあとで入力"></div></div>
-      <div class="modal-actions"><button class="btn" onclick="closeLoginAddModal()">キャンセル</button><button class="btn btn-primary" onclick="submitLogin()">追加する</button></div>
+      <div class="modal-actions"><button class="btn" onclick="closeLoginAddModal()">キャンセル</button><button class="btn btn-primary" id="login-submit-btn" onclick="submitLogin()">追加する</button></div>
     </div>
   </div>
 
@@ -406,7 +443,7 @@
         <div class="form-row"><label class="form-label">次回アクション</label><input class="form-input" id="client-form-next" placeholder="例：初回設定MTG 4/20"></div>
       </div>
       <div class="form-row"><label class="form-label">メモ</label><textarea class="form-textarea" id="client-form-note" placeholder="補足や注意点など"></textarea></div>
-      <div class="modal-actions"><button class="btn" onclick="closeClientAddModal()">キャンセル</button><button class="btn btn-primary" onclick="submitClient()">追加する</button></div>
+      <div class="modal-actions"><button class="btn" onclick="closeClientAddModal()">キャンセル</button><button class="btn btn-primary" id="client-submit-btn" onclick="submitClient()">追加する</button></div>
     </div>
   </div>
 
@@ -458,6 +495,36 @@
       { type:'サイト', name:'グローバルエステート', siteUrl:'https://grobal-estate.jp/', loginUrl:'https://grobal-estate.jp/wp-login.php', loginId:'peekaboo.develop@gmail.com', password:'' },
       { type:'ツール', name:'ITreview', siteUrl:'https://client.itreview.jp/client/libot', loginUrl:'https://client.itreview.jp/client/libot', loginId:'s.tokano@ai-bt.co.jp', password:'' }
     ];
+    const SALES_MATERIALS = [
+      { title:'LIBOTお客様用資料(AIBOT用)', url:'https://ai-bot.co.jp/wp-content/uploads/2022/03/LIBOT_AIBOT.pdf', category:'営業資料' },
+      { title:'LIBOT営業用資料1', url:'https://ai-bot.co.jp/wp-content/uploads/2022/04/LIBOT-営業資料-AIBOT.pdf', category:'営業資料' },
+      { title:'LIBOT営業用資料2', url:'https://ai-bot.co.jp/document/LIBOT-AIBOT.pdf', category:'営業資料' },
+      { title:'LIBOT導入における注意事項', url:'https://ai-bot.co.jp/wp-content/uploads/2022/06/LIBOTmanual01.pdf', category:'導入資料' },
+      { title:'LIBOT導入までの準備', url:'https://ai-bot.co.jp/wp-content/uploads/2022/06/LIBOTmanual02.pdf', category:'導入資料' },
+      { title:'お客様誓約書', url:'https://ai-bot.co.jp/wp-content/uploads/2021/10/LIBOT申込誓約書.pdf', category:'導入資料' },
+      { title:'LIBOT代理店用資料', url:'https://ai-bot.co.jp/wp-content/uploads/2021/10/代理店向けプレゼン資料.pdf', category:'営業資料' },
+      { title:'LIBOT紹介動画', url:'https://ai-bot.co.jp/wp-content/uploads/2021/10/libot.mp4', category:'動画' },
+      { title:'LIBOT導入事例', url:'https://ai-bot.co.jp/wp-content/uploads/2022/02/LIBOT_導入事例.pdf', category:'事例' },
+      { title:'LIBOT管理ページマニュアル', url:'https://ai-bot.co.jp/wp-content/uploads/2022/06/LIBOTmanual03.pdf', category:'マニュアル' },
+      { title:'LIBOT推奨運用マニュアル', url:'https://ai-bot.co.jp/wp-content/uploads/2022/06/LIBOTmanual04.pdf', category:'マニュアル' },
+      { title:'LIBOT管理マニュアルテンプレート', url:'https://ai-bot.co.jp/wp-content/uploads/document/manual05.pdf', category:'マニュアル' },
+      { title:'LIBOT管理マニュアルリッチメニュー', url:'https://ai-bot.co.jp/wp-content/uploads/document/manual06.pdf', category:'マニュアル' },
+      { title:'LIBOT全マニュアル', url:'https://ai-bot.co.jp/wp-content/uploads/2022/06/LIBOT-マニュアルALL.pdf', category:'マニュアル' },
+      { title:'画像サイズマニュアル', url:'https://ai-bot.co.jp/document/LIBOT-picture-size.pdf', category:'マニュアル' },
+      { title:'リッチメニューカタログ', url:'https://ai-bot.co.jp/wp-content/uploads/2021/10/LIBOT_Lプラン_メニューカタログ.pdf', category:'営業資料' },
+      { title:'IT補助金用', url:'https://ai-bot.co.jp/document/LIBOT-itdonyu.pdf', category:'営業資料' },
+      { title:'代理店研修アカウント追加URL', url:'https://line.me/R/ti/p/@686cocpj', category:'その他' },
+      { title:'導入における準備資料', url:'https://ai-bot.co.jp/document/LIBOT-donyu-setsumei.pdf', category:'導入資料' },
+      { title:'お客様提出用LINEの作り方、権限の共有の仕方', url:'https://ai-bot.co.jp/wp-content/uploads/document/line_official_account_authority.pdf', category:'導入資料' },
+      { title:'カタログ', url:'https://ai-bot.co.jp/document/LIBOT_CreativeCatalog.pdf', category:'営業資料' },
+      { title:'デモアカウント', url:'https://ai-bot.co.jp/document/LIBOT_demoaccount.pdf', category:'営業資料' },
+      { title:'LIBOTデザインカタログ', url:'https://ai-bot.co.jp/document/LIBOT_DesignCatalog.pdf', category:'営業資料' },
+      { title:'LIBOTデモアカウント資料', url:'https://ai-bot.co.jp/document/LIBOT_demoaccount.pdf', category:'営業資料' },
+      { title:'LIBOT × 商圏分析ツール資料', url:'https://ai-bot.co.jp/document/LIBOT-BA.pdf', category:'営業資料' },
+      { title:'初めてのLIBOT活用資料', url:'https://ai-bot.co.jp/document/LIBOT-BeginnerGuide.pdf', category:'営業資料' },
+      { title:'リッチメニューFLOW1,2資料', url:'https://ai-bot.co.jp/document/LIBOT-richmenus-template.pdf', category:'営業資料' }
+    ];
+
     const requests = [
       { id:1, team:'営業推進', author:'山田', title:'一斉配信の文字数上限を増やしてほしい', tag:'機能追加', body:'複数社から「メッセージが途切れる」との声。不動産・医療系で長文が多い。', client:'不動産△△様、クリニック〇〇様', status:'確認中', comments:[{from:'Deve 佐々木', text:'現状の上限1000文字を確認。要件整理します。'}] },
       { id:2, team:'運用支援', author:'鈴木', title:'リッチメニューの切り替えが管理画面からできない', tag:'改善', body:'オンボーディング時にクライアントが迷う。UIで直接切り替えられると助かる声多数。', client:'美容サロン〇〇様', status:'対応中', comments:[{from:'Deve 田中', text:'v2.3で対応予定。来月リリース見込み。'}] },
@@ -476,6 +543,7 @@
       } catch (e) {
         loginData = defaultLoginData;
       }
+      loginData = loginData.map(normalizeLoginItem);
       saveLogins();
     }
     function saveLogins() {
@@ -491,6 +559,7 @@
       } catch (e) {
         clientData = defaultClientData;
       }
+      clientData = clientData.map(normalizeClientItem);
       saveClients();
     }
     function saveClients() {
@@ -523,6 +592,45 @@
       openLink(meeting.url);
     }
 
+    function makeId() { return Date.now() + Math.floor(Math.random() * 100000); }
+    function normalizeLoginItem(item) { return { id: item.id || makeId(), type: item.type || 'その他', name: item.name || '', siteUrl: item.siteUrl || '', loginUrl: item.loginUrl || '', loginId: item.loginId || '', password: item.password || '' }; }
+    function normalizeClientItem(item) { return { id: item.id || makeId(), name: item.name || '', industry: item.industry || '', productionStatus: item.productionStatus || '未着手', onboardingStatus: item.onboardingStatus || '未開始', owner: item.owner || '', nextAction: item.nextAction || '', note: item.note || '' }; }
+    function getFilteredSalesMaterials() {
+      const q = (document.getElementById('material-search')?.value || '').trim().toLowerCase();
+      const category = document.getElementById('material-category-filter')?.value || '';
+      return SALES_MATERIALS.filter(item => {
+        const matchesCategory = !category || item.category === category;
+        const haystack = [item.title, item.url, item.category].join(' ').toLowerCase();
+        const matchesQuery = !q || haystack.includes(q);
+        return matchesCategory && matchesQuery;
+      });
+    }
+    function renderSalesMaterials() {
+      const grid = document.getElementById('materials-grid');
+      if (!grid) return;
+      const filtered = getFilteredSalesMaterials();
+      document.getElementById('material-count').textContent = filtered.length;
+      grid.innerHTML = '';
+      if (!filtered.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">該当する営業資料はありません</div>'; return; }
+      filtered.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'material-card';
+        div.innerHTML = `
+          <div class="material-meta"><span class="pill ${item.category === '動画' ? 'pill-red' : item.category === 'マニュアル' ? 'pill-cyan' : item.category === '導入資料' ? 'pill-yellow' : item.category === '事例' ? 'pill-green' : 'pill-blue'}">${escapeHtml(item.category)}</span></div>
+          <div class="material-title">${escapeHtml(item.title)}</div>
+          <div class="material-url mono">${escapeHtml(item.url)}</div>
+          <div class="row-actions"><button class="btn btn-primary" onclick="openLink('${item.url}')">開く</button><button class="btn" onclick='copyText(${jsString(item.url)}, this)'>URLコピー</button></div>
+        `;
+        grid.appendChild(div);
+      });
+    }
+    function openSalesMaterials() {
+      showPage('marke-sales', syncMenu('marke-sales'));
+      renderSalesMaterials();
+      const panel = document.getElementById('sales-materials-panel');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     function updateStats() {
       document.getElementById('stat-login-count').textContent = loginData.length;
       document.getElementById('stat-client-count').textContent = clientData.length;
@@ -552,6 +660,7 @@
       if (el) el.classList.add('active'); else { const matched = syncMenu(id); if (matched) matched.classList.add('active'); }
       if (id === 'marke-logins') renderLoginTable();
       if (id === 'marke-ops') renderClients();
+      if (id === 'marke-sales') renderSalesMaterials();
       if (id === 'deve-requests') renderRequests();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -586,7 +695,7 @@
           <td>${createSafeLink(item.loginUrl)}</td>
           <td><span class="mono">${escapeHtml(item.loginId || '—')}</span></td>
           <td><div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><span class="mono" id="pw-${index}">${passwordMasked}</span><button class="btn" style="padding:8px 10px;" onclick="togglePassword(${index})">表示</button></div></td>
-          <td><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn" style="padding:8px 10px;" onclick='copyText(${jsString(item.loginId)}, this)'>IDコピー</button><button class="btn" style="padding:8px 10px;" onclick='copyText(${jsString(item.password)}, this)'>PWコピー</button></div></td>`;
+          <td><div class="row-actions"><button class="btn" style="padding:8px 10px;" onclick='copyText(${jsString(item.loginId)}, this)'>IDコピー</button><button class="btn" style="padding:8px 10px;" onclick='copyText(${jsString(item.password)}, this)'>PWコピー</button><button class="btn" style="padding:8px 10px;" onclick="editLogin(${item.id})">編集</button><button class="btn" style="padding:8px 10px;" onclick="deleteLogin(${item.id})">削除</button></div></td>`;
         tbody.appendChild(tr);
       });
     }
@@ -616,7 +725,7 @@
       const filtered = getFilteredClients();
       tbody.innerHTML = '';
       if (!filtered.length) {
-        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">該当するクライアント情報はありません</div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">該当するクライアント情報はありません</div></td></tr>`;
         updateStats();
         return;
       }
@@ -632,17 +741,51 @@
           <td>${escapeHtml(item.owner || '—')}</td>
           <td>${escapeHtml(item.nextAction || '—')}</td>
           <td>${escapeHtml(item.note || '—')}</td>
+          <td><div class="row-actions"><button class="btn" style="padding:8px 10px;" onclick="editClient(${item.id})">編集</button><button class="btn" style="padding:8px 10px;" onclick="deleteClient(${item.id})">削除</button></div></td>
         `;
         tbody.appendChild(tr);
       });
       updateStats();
     }
-    function openClientAddModal() { document.getElementById('client-add-modal').classList.add('open'); }
+    function resetClientForm() {
+      document.getElementById('client-edit-id').value = '';
+      document.getElementById('client-modal-title').textContent = '＋ クライアントを追加';
+      document.getElementById('client-submit-btn').textContent = '追加する';
+      ['client-form-name','client-form-industry','client-form-owner','client-form-next','client-form-note'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('client-form-production').value = '未着手';
+      document.getElementById('client-form-onboarding').value = '未開始';
+    }
+    function openClientAddModal() { resetClientForm(); document.getElementById('client-add-modal').classList.add('open'); }
+    function editClient(id) {
+      const item = clientData.find(x => x.id === id);
+      if (!item) return;
+      document.getElementById('client-edit-id').value = String(id);
+      document.getElementById('client-modal-title').textContent = '✏️ クライアントを編集';
+      document.getElementById('client-submit-btn').textContent = '更新する';
+      document.getElementById('client-form-name').value = item.name || '';
+      document.getElementById('client-form-industry').value = item.industry || '';
+      document.getElementById('client-form-production').value = item.productionStatus || '未着手';
+      document.getElementById('client-form-onboarding').value = item.onboardingStatus || '未開始';
+      document.getElementById('client-form-owner').value = item.owner || '';
+      document.getElementById('client-form-next').value = item.nextAction || '';
+      document.getElementById('client-form-note').value = item.note || '';
+      document.getElementById('client-add-modal').classList.add('open');
+    }
+    function deleteClient(id) {
+      const item = clientData.find(x => x.id === id);
+      if (!item) return;
+      if (!confirm(`「${item.name}」を削除しますか？`)) return;
+      clientData = clientData.filter(x => x.id !== id);
+      saveClients();
+      renderClients();
+    }
     function closeClientAddModal() { document.getElementById('client-add-modal').classList.remove('open'); }
     function submitClient() {
+      const editId = document.getElementById('client-edit-id').value;
       const name = document.getElementById('client-form-name').value.trim();
       if (!name) { alert('会社名は必須です'); return; }
-      clientData.unshift({
+      const payload = normalizeClientItem({
+        id: editId ? Number(editId) : makeId(),
         name,
         industry: document.getElementById('client-form-industry').value.trim(),
         productionStatus: document.getElementById('client-form-production').value,
@@ -651,17 +794,47 @@
         nextAction: document.getElementById('client-form-next').value.trim(),
         note: document.getElementById('client-form-note').value.trim()
       });
+      if (editId) clientData = clientData.map(item => item.id === Number(editId) ? payload : item);
+      else clientData.unshift(payload);
       saveClients();
       renderClients();
-      ['client-form-name','client-form-industry','client-form-owner','client-form-next','client-form-note'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('client-form-production').value = '未着手';
-      document.getElementById('client-form-onboarding').value = '未開始';
+      resetClientForm();
       closeClientAddModal();
     }
 
-    function openLoginAddModal() { document.getElementById('login-add-modal').classList.add('open'); }
+    function resetLoginForm() {
+      document.getElementById('login-edit-id').value = '';
+      document.getElementById('login-modal-title').textContent = '＋ ログイン情報を追加';
+      document.getElementById('login-submit-btn').textContent = '追加する';
+      ['login-form-name','login-form-site','login-form-login','login-form-id','login-form-pass'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('login-form-type').value = 'サイト';
+    }
+    function openLoginAddModal() { resetLoginForm(); document.getElementById('login-add-modal').classList.add('open'); }
+    function editLogin(id) {
+      const item = loginData.find(x => x.id === id);
+      if (!item) return;
+      document.getElementById('login-edit-id').value = String(id);
+      document.getElementById('login-modal-title').textContent = '✏️ ログイン情報を編集';
+      document.getElementById('login-submit-btn').textContent = '更新する';
+      document.getElementById('login-form-type').value = item.type || 'サイト';
+      document.getElementById('login-form-name').value = item.name || '';
+      document.getElementById('login-form-site').value = item.siteUrl || '';
+      document.getElementById('login-form-login').value = item.loginUrl || '';
+      document.getElementById('login-form-id').value = item.loginId || '';
+      document.getElementById('login-form-pass').value = item.password || '';
+      document.getElementById('login-add-modal').classList.add('open');
+    }
+    function deleteLogin(id) {
+      const item = loginData.find(x => x.id === id);
+      if (!item) return;
+      if (!confirm(`「${item.name}」を削除しますか？`)) return;
+      loginData = loginData.filter(x => x.id !== id);
+      saveLogins();
+      renderLoginTable();
+    }
     function closeLoginAddModal() { document.getElementById('login-add-modal').classList.remove('open'); }
     function submitLogin() {
+      const editId = document.getElementById('login-edit-id').value;
       const type = document.getElementById('login-form-type').value;
       const name = document.getElementById('login-form-name').value.trim();
       const siteUrl = document.getElementById('login-form-site').value.trim();
@@ -669,10 +842,11 @@
       const loginId = document.getElementById('login-form-id').value.trim();
       const password = document.getElementById('login-form-pass').value.trim();
       if (!name) { alert('サービス名は必須です'); return; }
-      loginData.unshift({ type, name, siteUrl, loginUrl, loginId, password });
+      const payload = normalizeLoginItem({ id: editId ? Number(editId) : makeId(), type, name, siteUrl, loginUrl, loginId, password });
+      if (editId) loginData = loginData.map(item => item.id === Number(editId) ? payload : item);
+      else loginData.unshift(payload);
       saveLogins(); renderLoginTable();
-      ['login-form-name','login-form-site','login-form-login','login-form-id','login-form-pass'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('login-form-type').value = 'サイト';
+      resetLoginForm();
       closeLoginAddModal();
     }
     function downloadLoginsJson() {
@@ -715,7 +889,7 @@
     function changeStatus(id, value) { const target = requests.find(r => r.id === id); if (!target) return; target.status = value; renderRequests(); }
     function addComment(id) { const input = document.getElementById(`reply-${id}`); if (!input || !input.value.trim()) return; const target = requests.find(r => r.id === id); if (!target) return; target.comments.push({ from:'Deve', text: input.value.trim() }); renderRequests(); }
     function copyText(text, btn) { navigator.clipboard.writeText(text || '').catch(() => {}); const original = btn.textContent; btn.textContent = 'コピー済み'; setTimeout(() => btn.textContent = original, 1200); }
-    loadLogins(); loadClients(); setDate(); renderTodayMeetings(); renderLoginTable(); renderClients(); renderRequests();
+    loadLogins(); loadClients(); setDate(); renderTodayMeetings(); renderSalesMaterials(); renderLoginTable(); renderClients(); renderRequests();
   </script>
 </body>
 </html>
